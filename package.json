@@ -1,0 +1,20 @@
+{
+  "name": "radium-fs",
+  "version": "0.0.1",
+  "description": "",
+  "homepage": "https://github.com/radium-fs/radium-fs#readme",
+  "bugs": {
+    "url": "https://github.com/radium-fs/radium-fs/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/radium-fs/radium-fs.git"
+  },
+  "license": "MIT",
+  "author": "wuchangming",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
