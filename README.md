@@ -5,19 +5,22 @@
 <h1 align="center">radium-fs</h1>
 
 <p align="center">
-  A filesystem space management system for managing and interconnecting folder spaces.
+  A filesystem-level DAG caching engine for building interconnected spaces.
 </p>
 
 ## What is radium-fs?
 
-radium-fs lets you declaratively create, cache, and interconnect filesystem spaces. Each space is a managed folder with deterministic identity, dependency tracking, and lifecycle hooks.
+radium-fs manages a persistent pool of filesystem spaces. Each space is a real folder with a deterministic identity — same recipe, same input, same result. Spaces link to each other via symlinks, forming a dependency graph where nothing is duplicated and everything can be rebuilt.
 
-### Core Concepts
+**Why it matters:** Complex multi-agent systems need to share, compose, and reuse filesystem artifacts at scale. radium-fs gives them a shared infrastructure layer where spaces are created once, cached forever, linked instantly, and rebuilt on demand.
 
-- **Space** — A managed folder with a deterministic ID (`kind + input → dataId`), metadata manifest, and lifecycle hooks.
-- **Kind** — A recipe (`defineKind`) that defines how a space is produced, with `onInit` and optional `onCommand` hooks.
-- **Store** — The central API (`createStore`) that orchestrates space creation, caching, and dependency resolution.
-- **Adapter** — A pluggable filesystem interface (`RfsFsAdapter`) that makes the core runtime-agnostic (Node.js, in-memory, etc.).
+### Key Properties
+
+- **Deterministic** — `kind + input → dataId`. Same input always produces the same space at the same path.
+- **Composable** — Spaces declare dependencies via `dep()`. Symlinks wire them together in milliseconds, no copying.
+- **Resilient** — Delete any space, it rebuilds from its recipe. Dependencies rebuild recursively.
+- **Physical** — Every space is a real directory. Use grep, find, rg, or any tool you already have.
+- **Runtime-agnostic** — Core has zero platform dependencies. Runs anywhere JavaScript runs.
 
 ### Quick Example
 
@@ -25,18 +28,25 @@ radium-fs lets you declaratively create, cache, and interconnect filesystem spac
 import { defineKind, createStore } from '@radium-fs/core';
 import { nodeAdapter } from '@radium-fs/node';
 
-const greeter = defineKind({
-  kind: 'greeter',
+const lib = defineKind({
+  kind: 'lib',
   async onInit({ input, space }) {
-    await space.writeFile('hello.txt', `Hello, ${input.name}!`);
+    await space.writeFile('index.js', `export const name = "${input.name}";`);
+    return { exports: { '.': '.', './src': 'src' } };
+  },
+});
+
+const app = defineKind({
+  kind: 'app',
+  async onInit({ input, space }) {
+    const libPath = await space.dep('lib', lib, { name: 'utils' });
+    await space.writeFile('main.js', `import { name } from "${libPath}";`);
   },
 });
 
 const store = createStore({ root: '/project', adapter: nodeAdapter() });
-const space = await store.ensure(greeter, { name: 'world' });
-
-console.log(space.path);    // deterministic path based on kind + input
-console.log(space.exports); // { '.': '<absolute path to space dir>' }
+const appSpace = await store.ensure(app, {});
+// appSpace.path → deterministic, cached, with lib linked inside
 ```
 
 ## Packages
