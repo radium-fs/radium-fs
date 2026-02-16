@@ -6,47 +6,14 @@
  */
 
 import type { ZodType } from 'zod';
-
-// ---------------------------------------------------------------------------
-// File Operation Types
-// ---------------------------------------------------------------------------
-
-/** Options for readFile */
-export interface RfsReadFileOptions {
-  offset?: number;
-  limit?: number;
-}
-
-/** Options for readDir */
-export interface RfsReadDirOptions {
-  recursive?: boolean;
-  maxResults?: number;
-}
-
-/** Return value of stat */
-export interface RfsStatResult {
-  isFile: boolean;
-  isDirectory: boolean;
-  size: number;
-  mtime: Date;
-}
-
-/** Options for remove */
-export interface RfsRemoveOptions {
-  recursive?: boolean;
-}
-
-/** Options for glob */
-export interface RfsGlobOptions {
-  ignore?: string[];
-  maxResults?: number;
-}
-
-/** Options for grep */
-export interface RfsGrepOptions {
-  include?: string[];
-  maxResults?: number;
-}
+import type {
+  RfsReadFileOptions,
+  RfsReadDirOptions,
+  RfsStatResult,
+  RfsRemoveOptions,
+  RfsGlobOptions,
+  RfsGrepOptions,
+} from './fs-types';
 
 // ---------------------------------------------------------------------------
 // space.local API
@@ -63,7 +30,7 @@ export interface RfsLocalApi {
   /** Absolute path to the local directory */
   readonly path: string;
 
-  writeFile(path: string, content: string | Buffer): Promise<void>;
+  writeFile(path: string, content: string | Uint8Array): Promise<void>;
   readFile(path: string, options?: RfsReadFileOptions): Promise<string>;
   mkdir(path: string): Promise<void>;
   readDir(path: string, options?: RfsReadDirOptions): Promise<string[]>;
@@ -82,7 +49,7 @@ export interface RfsDepOptions {
   /**
    * Dependency scope
    * - `'shared'` (default): stored in the global radium-fs-data/ directory, reusable by any space
-   * - `'local'`: stored in the parent space's .radium-fs-deps/ directory, deleted with the parent
+   * - `'local'`: stored in the parent space's .radium-fs-local-deps/ directory, deleted with the parent
    */
   scope?: 'shared' | 'local';
 
@@ -123,7 +90,7 @@ export interface RfsSpaceApi<TRuntime = Record<string, unknown>> {
   readonly local: RfsLocalApi;
 
   // -- File Operations --
-  writeFile(path: string, content: string | Buffer): Promise<void>;
+  writeFile(path: string, content: string | Uint8Array): Promise<void>;
   readFile(path: string, options?: RfsReadFileOptions): Promise<string>;
   mkdir(path: string): Promise<void>;
   readDir(path: string, options?: RfsReadDirOptions): Promise<string[]>;
@@ -136,9 +103,9 @@ export interface RfsSpaceApi<TRuntime = Record<string, unknown>> {
 
   // -- Dependency --
   /**
-   * Mount a dependency at space/deps/{mountPath}
+   * Mount a dependency at space/{mountPath}
    *
-   * @param mountPath - Mount name (directory name under space/deps/)
+   * @param mountPath - Mount path (relative to space/)
    * @param kind - The dependency's Kind definition
    * @param input - Input for the dependency
    * @param options - Optional mount options
@@ -215,7 +182,7 @@ export interface RfsOnInitContext<
   /** Abort signal */
   signal: AbortSignal;
 
-  /** Emit a custom event (captured by store.onEvent) */
+  /** Emit a custom event (captured by store.on()) */
   emit: (payload: unknown) => void;
 }
 
@@ -264,7 +231,7 @@ interface RfsKindDefBase<TInput, TRuntime> {
   cacheKey?: (input: TInput) => Record<string, unknown>;
 
   /** Initialization hook */
-  onInit: (ctx: RfsOnInitContext<TInput, TRuntime>) => Promise<RfsInitResult>;
+  onInit: (ctx: RfsOnInitContext<TInput, TRuntime>) => Promise<RfsInitResult | void>;
 }
 
 /** Kind definition without command capability */
@@ -325,7 +292,7 @@ export interface RfsKind<
   /** Initialization hook */
   readonly onInit: (
     ctx: RfsOnInitContext<TInput, TRuntime>,
-  ) => Promise<RfsInitResult>;
+  ) => Promise<RfsInitResult | void>;
 
   /** Command handler hook */
   readonly onCommand?: (

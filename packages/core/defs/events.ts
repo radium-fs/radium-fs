@@ -2,13 +2,13 @@
  * radium-fs event types
  *
  * Events are delivered through three channels:
- * 1. Store-level `onEvent` — global listener for all events
+ * 1. Store-level `store.on()` — global listener for all events
  * 2. Ensure-level options callbacks — `onStart`, `onCached`, etc.
- * 3. Space-level `.on()` — command-related events only (command:start/done/error/custom)
+ * 3. Space-level `.on()` / `.onCustom()` — command lifecycle events and custom events
  *
  * Note: Custom events emitted via emit() during onInit can only be captured
- * by the store-level onEvent, since the RfsSpace object has not yet been
- * returned to the caller at that point.
+ * by store.on(), since the RfsSpace object has not yet been returned to the
+ * caller at that point.
  */
 
 // ---------------------------------------------------------------------------
@@ -99,7 +99,7 @@ export interface RfsCustomEvent<T = unknown> {
 // Union
 // ---------------------------------------------------------------------------
 
-/** Union of all event types (received by store.onEvent) */
+/** Union of all event types (received by store.on()) */
 export type RfsEvent =
   | RfsInitStartEvent
   | RfsInitCachedEvent

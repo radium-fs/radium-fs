@@ -6,6 +6,7 @@
  * A Space is the object returned by store.ensure(), representing a ready-to-use space instance.
  */
 
+import type { RfsFsAdapter } from './adapter';
 import type { RfsManifest, RfsOrigin } from './manifest';
 import type { RfsKind } from './kind';
 import type {
@@ -109,11 +110,11 @@ export interface RfsStoreOptions {
   /** Data root directory (radium-fs-data/ will be created under this path) */
   root: string;
 
+  /** Filesystem adapter (platform-specific I/O implementation) */
+  adapter: RfsFsAdapter;
+
   /** Global runtime context (passed to all spaces via space.runtime) */
   runtime?: Record<string, unknown>;
-
-  /** Global event listener (receives all init/command/custom events) */
-  onEvent?: (event: RfsEvent) => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -153,6 +154,12 @@ export interface RfsEnsureOptions {
  * Returned by `createStore()`. The central entry point of radium-fs.
  */
 export interface RfsStore {
+  /** Data root directory */
+  readonly root: string;
+
+  /** Filesystem adapter in use */
+  readonly adapter: RfsFsAdapter;
+
   /**
    * Get or create a space
    *
@@ -166,6 +173,13 @@ export interface RfsStore {
     input: TInput,
     options?: RfsEnsureOptions,
   ): Promise<RfsSpace<TCommand>>;
+
+  /**
+   * Subscribe to lifecycle events (init, command, custom)
+   *
+   * @returns Unsubscribe function
+   */
+  on(handler: (event: RfsEvent) => void): RfsUnsubscribe;
 
   /**
    * Find an existing space by origin

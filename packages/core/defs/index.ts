@@ -9,11 +9,24 @@ export {
   RFS_MANIFEST_FILENAME,
   RFS_SPACE_DIRNAME,
   RFS_LOCAL_DIRNAME,
-  RFS_DEPS_DIRNAME,
+  RFS_LOCAL_DEPS_DIRNAME,
   RFS_DATA_DIRNAME,
   RFS_TEMP_PREFIX,
   RFS_MANIFEST_VERSION,
 } from './constants';
+
+// Shared filesystem types
+export type {
+  RfsReadFileOptions,
+  RfsReadDirOptions,
+  RfsStatResult,
+  RfsRemoveOptions,
+  RfsGlobOptions,
+  RfsGrepOptions,
+} from './fs-types';
+
+// Adapter
+export type { RfsFsAdapter } from './adapter';
 
 // Manifest & Origin types
 export type {
@@ -41,12 +54,6 @@ export type {
 
 // Kind types
 export type {
-  RfsReadFileOptions,
-  RfsReadDirOptions,
-  RfsStatResult,
-  RfsRemoveOptions,
-  RfsGlobOptions,
-  RfsGrepOptions,
   RfsLocalApi,
   RfsDepOptions,
   RfsSpaceApi,

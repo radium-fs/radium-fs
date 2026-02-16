@@ -35,10 +35,10 @@ export interface RfsOrigin {
  * Dependency record
  *
  * Records a dependency relationship from one space to another.
- * Dependencies are mounted via symlink at `space/deps/{mountPath}`.
+ * Dependencies are mounted via symlink at `space/{mountPath}`.
  */
 export interface RfsDependency {
-  /** Mount path (relative to space/deps/) */
+  /** Mount path (relative to space/) */
   mountPath: string;
 
   /** Origin of the dependency target */
@@ -47,7 +47,7 @@ export interface RfsDependency {
   /**
    * Dependency scope
    * - `shared` (default): stored in the global radium-fs-data/ directory, reusable by any space
-   * - `local`: stored in the parent space's .radium-fs-deps/ directory, deleted with the parent
+   * - `local`: stored in the parent space's .radium-fs-local-deps/ directory, deleted with the parent
    */
   scope: 'shared' | 'local';
 

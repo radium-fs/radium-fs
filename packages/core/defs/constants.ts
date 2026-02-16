@@ -14,7 +14,7 @@ export const RFS_SPACE_DIRNAME = 'space' as const;
 export const RFS_LOCAL_DIRNAME = 'local' as const;
 
 /** Local-scope dependency storage directory name */
-export const RFS_DEPS_DIRNAME = '.radium-fs-deps' as const;
+export const RFS_LOCAL_DEPS_DIRNAME = '.radium-fs-local-deps' as const;
 
 /** Top-level data storage directory name */
 export const RFS_DATA_DIRNAME = 'radium-fs-data' as const;

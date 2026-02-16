@@ -58,18 +58,18 @@ The internal structure of a temporary directory is identical to the final direct
 ├── space/                         ← Public content (operated on by onInit/onCommand)
 │   ├── src/
 │   ├── dist/
-│   ├── deps/                      ← Dependency mount directory
-│   │   ├── lib-a → <target export path>    ← symlink (shared scope)
-│   │   └── lib-b → <target export path>    ← symlink (local scope)
+│   ├── lib-a → <target export path>    ← dependency symlink (mountPath = "lib-a")
+│   ├── vendor/
+│   │   └── lib-b → <target export path>  ← dependency symlink (mountPath = "vendor/lib-b")
 │   └── ...
 ├── local/                         ← Private storage (operated on by space.local)
 │   └── ...                        ← Not visible to space.readDir/glob
-└── .radium-fs-deps/               ← Local-scope child dependency storage
+└── .radium-fs-local-deps/         ← Local-scope child dependency storage
     └── {child-kind}/{shard}/{childDataId}/
         ├── .radium-fs-manifest.json
         ├── space/
         ├── local/
-        └── .radium-fs-deps/       ← Supports multi-level nesting
+        └── .radium-fs-local-deps/ ← Supports multi-level nesting
 ```
 
 ## Core Components
@@ -112,11 +112,11 @@ Describes how the space was produced, used for lookup and regeneration:
 
 ### Dependency
 
-Dependencies are mounted via symlink at `space/deps/{mountPath}`:
+Dependencies are mounted via symlink at `space/{mountPath}`:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `mountPath` | `string` | Mount name |
+| `mountPath` | `string` | Mount path (relative to space/) |
 | `origin` | `RfsOrigin` | Origin of the target space |
 | `scope` | `'shared' \| 'local'` | Scope |
 | `export` | `string?` | Selected export (defaults to `'.'`) |
@@ -142,10 +142,10 @@ Stored in the global `{root}/radium-fs-data/` directory:
 
 ### local
 
-Stored in the parent space's `.radium-fs-deps/` directory:
+Stored in the parent space's `.radium-fs-local-deps/` directory:
 
 ```
-{parentDataId}/.radium-fs-deps/{dep-kind}/{shard}/{depDataId}/
+{parentDataId}/.radium-fs-local-deps/{dep-kind}/{shard}/{depDataId}/
 ```
 
 - Physically belongs to the parent space, deleted when the parent is deleted
@@ -165,6 +165,47 @@ Stored in the parent space's `.radium-fs-deps/` directory:
    e. Atomically `rename` the temp directory to the final directory
    f. Return RfsSpace
 
+## Adapter Layer
+
+The core (`@radium-fs/core`) is **runtime-agnostic** — it contains only type definitions and no platform-specific code (no Node.js `fs`, no `Buffer`, etc.).
+
+All filesystem I/O is abstracted behind the `RfsFsAdapter` interface. When creating a store, the caller must provide an adapter implementation:
+
+```typescript
+import { createStore } from '@radium-fs/core';
+import { nodeAdapter } from '@radium-fs/node';
+
+const store = createStore({
+  root: '/project',
+  adapter: nodeAdapter(),
+});
+```
+
+### Built-in Adapter Implementations (planned)
+
+| Package | Runtime | Description |
+|---------|---------|-------------|
+| `@radium-fs/node` | Node.js / Bun | Wraps `node:fs/promises` |
+| `@radium-fs/memory` | Any | In-memory filesystem (tests, browser) |
+
+### RfsFsAdapter Interface
+
+The adapter must implement these primitive operations:
+
+- `readFile` — Read a file as raw bytes (`Uint8Array`)
+- `writeFile` — Write string or `Uint8Array` content
+- `mkdir` — Create directories (always recursive)
+- `readDir` — List directory entries
+- `stat` — Get file/directory metadata
+- `exists` — Check path existence
+- `remove` — Delete files or directories
+- `rename` — Atomically rename/move (used for temp → final)
+- `symlink` — Create symbolic links (used for dependency mounting)
+- `glob` — Find files matching a glob pattern
+- `grep` — Search file contents for a pattern
+
+Binary data uses `Uint8Array` (not `Buffer`) to maintain runtime neutrality. The adapter returns raw bytes from `readFile`; the core layer handles text decoding (UTF-8) when needed.
+
 ## Design Principles
 
 1. **Deterministic** — Same kind + input always produces the same dataId, providing natural deduplication
@@ -174,3 +215,4 @@ Stored in the parent space's `.radium-fs-deps/` directory:
 5. **Physically isolated** — The local directory and space directory do not interfere with each other; dependency relationships are clear
 6. **Atomic** — Temporary directory + rename ensures no half-built spaces exist
 7. **Dependency tracking** — Manifest records all dependency relationships, supporting dependency graph analysis
+8. **Runtime-agnostic** — Core uses `Uint8Array` instead of `Buffer` and delegates I/O to an adapter, running on any JavaScript runtime
