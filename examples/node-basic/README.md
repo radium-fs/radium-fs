@@ -22,7 +22,7 @@ pnpm start
 --- First ensure (cache miss, will build) ---
 first ensure: ~XXms
 
-App space path: radium-fs-data/app-XXXXXXXX
+App space path: .radium-fs-data/app-XXXXXXXX
 App exports: { '.': '.' }
 
 --- Second ensure (cache hit, instant) ---
@@ -30,14 +30,14 @@ second ensure: ~Xms
 
 --- Disk structure ---
 Run the following to inspect:
-  tree radium-fs-data/
+  tree .radium-fs-data/
   ...
 ```
 
 ## Expected disk structure
 
 ```
-radium-fs-data/
+.radium-fs-data/
 ├── config-a1b2c3d4/
 │   ├── .radium-fs-manifest.json
 │   └── space/

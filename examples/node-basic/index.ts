@@ -91,6 +91,6 @@ console.timeEnd('second ensure');
 
 console.log('\n--- Disk structure ---');
 console.log('Run the following to inspect:');
-console.log(`  tree radium-fs-data/`);
+console.log(`  tree .radium-fs-data/`);
 console.log(`  cat ${appSpace.path}/main.js`);
 console.log(`  ls -la ${appSpace.path}/   # notice the symlinks`);

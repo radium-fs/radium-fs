@@ -46,7 +46,7 @@ export interface RfsDependency {
 
   /**
    * Dependency scope
-   * - `shared` (default): stored in the global radium-fs-data/ directory, reusable by any space
+   * - `shared` (default): stored in the global .radium-fs-data/ directory, reusable by any space
    * - `local`: stored in the parent space's .radium-fs-local-deps/ directory, deleted with the parent
    */
   scope: 'shared' | 'local';

@@ -149,7 +149,7 @@ export interface RfsLocker {
 
 /** Options for createStore */
 export interface RfsStoreOptions {
-  /** Data root directory (radium-fs-data/ will be created under this path) */
+  /** Data root directory (.radium-fs-data/ will be created under this path) */
   root: string;
 
   /** Platform adapter (filesystem I/O + crypto, platform-specific implementation) */

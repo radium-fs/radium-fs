@@ -9,11 +9,11 @@ RfsData is the filesystem data abstraction of radium-fs. Each space is an indepe
 ### Storage Path
 
 ```
-{root}/radium-fs-data/{kind}/{shard}/{dataId}/
+{root}/.radium-fs-data/{kind}/{shard}/{dataId}/
 ```
 
 - `root` — Data root directory (specified via `createStore({ root })`)
-- `radium-fs-data` — Fixed top-level data directory name
+- `.radium-fs-data` — Fixed top-level data directory name
 - `kind` — Space type (corresponds to `defineKind({ kind })` value)
 - `shard` — Shard directory (first two characters of dataId, distributes storage to avoid overly large directories)
 - `dataId` — Deterministic unique identifier
@@ -61,7 +61,7 @@ The first two characters of the dataId are used as the shard directory name. For
 A temporary directory is used during the build process, then atomically `rename`d to the final path upon completion:
 
 ```
-{root}/radium-fs-data/{kind}/{shard}/.tmp-{dataId}-{random}/
+{root}/.radium-fs-data/{kind}/{shard}/.tmp-{dataId}-{random}/
 ```
 
 - `.tmp-` — Temporary directory prefix
@@ -150,10 +150,10 @@ Symlink target is determined by the `export` option:
 
 ### shared (default)
 
-Stored in the global `{root}/radium-fs-data/` directory:
+Stored in the global `{root}/.radium-fs-data/` directory:
 
 ```
-{root}/radium-fs-data/{dep-kind}/{shard}/{depDataId}/
+{root}/.radium-fs-data/{dep-kind}/{shard}/{depDataId}/
 ```
 
 - Exists independently, not bound to any parent space

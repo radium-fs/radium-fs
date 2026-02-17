@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "tsx index.ts",
-    "clean": "rm -rf ../radium-fs-data"
+    "clean": "rm -rf ../.radium-fs-data"
   },
   "dependencies": {
     "@radium-fs/core": "workspace:*",

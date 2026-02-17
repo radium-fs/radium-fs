@@ -25,7 +25,7 @@ radium-fs manages a persistent pool of filesystem spaces. Each space is a real f
 ### What it looks like on disk
 
 ```
-radium-fs-data/
+.radium-fs-data/
 ├── lib/
 │   └── a3/
 │       └── a3f2c18e…/                    ← kind:lib + {name:"utils"}
@@ -75,7 +75,7 @@ const app = defineKind({
 
 const store = createStore({ root: '/project', adapter: nodeAdapter() });
 const appSpace = await store.ensure(app, {});
-// appSpace.path → /project/radium-fs-data/app-7b9e4d5f
+// appSpace.path → /project/.radium-fs-data/app/7b/7b9e4d5f…
 ```
 
 ## Packages
