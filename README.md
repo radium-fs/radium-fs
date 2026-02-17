@@ -53,7 +53,7 @@ const appSpace = await store.ensure(app, {});
 | Package | Description |
 |---------|-------------|
 | `@radium-fs/core` | Runtime-agnostic type definitions and constants |
-| `@radium-fs/node` | Node.js filesystem adapter *(planned)* |
+| `@radium-fs/node` | Node.js filesystem adapter (requires Node.js >= 22) |
 | `@radium-fs/memory` | In-memory filesystem adapter *(planned)* |
 
 ## Status

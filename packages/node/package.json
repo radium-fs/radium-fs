@@ -1,0 +1,45 @@
+{
+  "name": "@radium-fs/node",
+  "version": "0.0.1",
+  "description": "Node.js platform adapter for radium-fs",
+  "type": "module",
+  "main": "dist/index.mjs",
+  "types": "dist/index.d.mts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": ["radium-fs", "filesystem", "adapter", "node"],
+  "author": "wuchangming",
+  "license": "MIT",
+  "homepage": "https://github.com/radium-fs/radium-fs#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/radium-fs/radium-fs.git",
+    "directory": "packages/node"
+  },
+  "bugs": {
+    "url": "https://github.com/radium-fs/radium-fs/issues"
+  },
+  "peerDependencies": {
+    "@radium-fs/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@radium-fs/core": "workspace:*",
+    "@types/node": "^25.2.3",
+    "tsdown": "^0.20.3",
+    "typescript": "^5.0.0"
+  }
+}
