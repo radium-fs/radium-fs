@@ -177,6 +177,14 @@ export interface RfsStoreOptions {
 /** Options for store.ensure */
 export interface RfsEnsureOptions {
   /**
+   * Abort signal to cancel the ensure operation
+   *
+   * Propagated to locker.acquire() and onInit context.signal.
+   * When aborted, the build is interrupted and the Promise rejects.
+   */
+  signal?: AbortSignal;
+
+  /**
    * Whether to use the cache
    *
    * - `true` (default): returns immediately if the space already exists
