@@ -22,6 +22,30 @@ radium-fs manages a persistent pool of filesystem spaces. Each space is a real f
 - **Physical** — Every space is a real directory. Use grep, find, rg, or any tool you already have.
 - **Runtime-agnostic** — Core has zero platform dependencies. Runs anywhere JavaScript runs.
 
+### What it looks like on disk
+
+```
+radium-fs-data/
+├── lib-a3f2c18e/                          ← kind:lib + {name:"utils"}
+│   ├── .radium-fs-manifest.json
+│   └── space/
+│       └── index.js
+│
+├── config-9d4e7b01/                       ← kind:config + {env:"prod"}
+│   ├── .radium-fs-manifest.json
+│   └── space/
+│       └── settings.json
+│
+└── app-7b9e4d5f/                          ← kind:app + {name:"web"}
+    ├── .radium-fs-manifest.json
+    └── space/
+        ├── main.js
+        ├── lib → ../../lib-a3f2c18e/space/       ← symlink, zero copy
+        └── config → ../../config-9d4e7b01/space/  ← symlink, zero copy
+```
+
+Every space is a **real directory** with a **deterministic path**. Dependencies are **symlinks** — no duplication, instant wiring, and any tool (grep, find, VS Code) just works.
+
 ### Quick Example
 
 ```typescript
@@ -45,7 +69,7 @@ const app = defineKind({
 
 const store = createStore({ root: '/project', adapter: nodeAdapter() });
 const appSpace = await store.ensure(app, {});
-// appSpace.path → deterministic, cached, with lib linked inside
+// appSpace.path → /project/radium-fs-data/app-7b9e4d5f
 ```
 
 ## Packages
