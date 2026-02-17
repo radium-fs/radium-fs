@@ -1,21 +1,38 @@
 /**
- * radium-fs filesystem adapter interface
+ * radium-fs platform adapter interface
  *
- * The adapter abstracts all low-level filesystem operations, making the core
- * runtime-agnostic. Implement this interface to support different platforms
- * (Node.js, memfs, Deno, browser OPFS, etc.).
+ * The adapter abstracts all platform-specific operations (filesystem I/O and
+ * cryptographic hashing), making the core runtime-agnostic. Implement this
+ * interface to support different platforms (Node.js, memfs, Deno, browser
+ * OPFS, etc.).
  */
 
 import type { RfsStatResult, RfsRemoveOptions, RfsGlobOptions, RfsGrepOptions } from './fs-types';
 
 /**
- * Filesystem adapter
+ * Platform adapter
  *
- * Provides the primitive I/O operations that radium-fs needs internally.
- * Implementations must handle path resolution and ensure atomic behavior
- * where noted (e.g. rename).
+ * Provides the primitive I/O and crypto operations that radium-fs needs
+ * internally. Implementations must handle path resolution and ensure atomic
+ * behavior where noted (e.g. rename).
  */
-export interface RfsFsAdapter {
+export interface RfsAdapter {
+  // -- Crypto --
+
+  /**
+   * Compute a SHA-256 hash digest
+   *
+   * Used for deterministic dataId generation.
+   * Must return a lowercase hex-encoded SHA-256 digest (64 characters).
+   *
+   * Platform implementations:
+   * - Node.js: `crypto.createHash('sha256')`
+   * - Browser: `crypto.subtle.digest('SHA-256', data)`
+   */
+  hash(data: Uint8Array): Promise<string>;
+
+  // -- Filesystem --
+
   /** Read a file as raw bytes */
   readFile(path: string): Promise<Uint8Array>;
 

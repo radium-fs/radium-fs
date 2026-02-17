@@ -6,7 +6,7 @@
  * A Space is the object returned by store.ensure(), representing a ready-to-use space instance.
  */
 
-import type { RfsFsAdapter } from './adapter';
+import type { RfsAdapter } from './adapter';
 import type { RfsManifest, RfsOrigin } from './manifest';
 import type { RfsKind } from './kind';
 import type {
@@ -110,8 +110,8 @@ export interface RfsStoreOptions {
   /** Data root directory (radium-fs-data/ will be created under this path) */
   root: string;
 
-  /** Filesystem adapter (platform-specific I/O implementation) */
-  adapter: RfsFsAdapter;
+  /** Platform adapter (filesystem I/O + crypto, platform-specific implementation) */
+  adapter: RfsAdapter;
 
   /** Global runtime context (passed to all spaces via space.runtime) */
   runtime?: Record<string, unknown>;
@@ -157,8 +157,8 @@ export interface RfsStore {
   /** Data root directory */
   readonly root: string;
 
-  /** Filesystem adapter in use */
-  readonly adapter: RfsFsAdapter;
+  /** Platform adapter in use */
+  readonly adapter: RfsAdapter;
 
   /**
    * Get or create a space

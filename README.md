@@ -32,7 +32,6 @@ const lib = defineKind({
   kind: 'lib',
   async onInit({ input, space }) {
     await space.writeFile('index.js', `export const name = "${input.name}";`);
-    return { exports: { '.': '.', './src': 'src' } };
   },
 });
 

@@ -22,5 +22,8 @@ export const RFS_DATA_DIRNAME = 'radium-fs-data' as const;
 /** Temporary directory prefix (used during build, atomically renamed on completion) */
 export const RFS_TEMP_PREFIX = '.tmp-' as const;
 
+/** Hash algorithm used for deterministic dataId generation */
+export const RFS_HASH_ALGORITHM = 'sha256' as const;
+
 /** Current manifest version number */
 export const RFS_MANIFEST_VERSION = 1 as const;

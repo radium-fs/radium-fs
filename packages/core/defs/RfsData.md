@@ -21,12 +21,32 @@ RfsData is the filesystem data abstraction of radium-fs. Each space is an indepe
 ### dataId Generation
 
 ```
-dataId = hash(kind + JSON.stringify(cacheKey ?? input))
+dataId = sha256(kind + "\0" + canonicalStringify(cacheKey ?? input))
 ```
 
 - If the Kind defines a `cacheKey` function, the result of `cacheKey(input)` is used
 - Otherwise, the full `input` is used
 - Same kind + same cacheKey/input = same dataId (deterministic)
+
+#### Canonical Serialization
+
+`JSON.stringify` does **not** guarantee key ordering — `{ a: 1, b: 2 }` and `{ b: 2, a: 1 }` may produce different strings depending on the runtime. To ensure deterministic dataId generation across any environment, radium-fs uses **canonical JSON serialization**:
+
+1. Object keys are sorted **recursively** in lexicographic (Unicode code-point) order
+2. No whitespace or formatting (compact output)
+3. Values follow standard JSON serialization rules (`undefined` → omitted, `NaN`/`Infinity` → `null`)
+4. A null byte (`\0`) separates the kind from the serialized payload to prevent ambiguity
+
+The core provides a `canonicalStringify` utility that implements this specification.
+
+#### Hash Algorithm
+
+- **Algorithm**: SHA-256
+- **Output**: lowercase hex-encoded digest (64 characters)
+- **Constant**: `RFS_HASH_ALGORITHM = 'sha256'`
+- **Implementation**: provided by the platform adapter via `adapter.hash()`
+
+The full 64-character hex digest is used as the dataId. This gives a collision probability of ~2⁻¹²⁸ (birthday bound), which is effectively zero for any practical dataset.
 
 ### Shard Generation
 
@@ -154,7 +174,7 @@ Stored in the parent space's `.radium-fs-local-deps/` directory:
 
 ## Build Flow
 
-1. Compute `dataId = hash(kind + JSON.stringify(cacheKey ?? input))`
+1. Compute `dataId = sha256(kind + "\0" + canonicalStringify(cacheKey ?? input))`
 2. Check if `{kind}/{shard}/{dataId}/` exists (cache hit check)
 3. On cache hit: read the manifest and return an RfsSpace directly
 4. On cache miss:
@@ -167,9 +187,9 @@ Stored in the parent space's `.radium-fs-local-deps/` directory:
 
 ## Adapter Layer
 
-The core (`@radium-fs/core`) is **runtime-agnostic** — it contains only type definitions and no platform-specific code (no Node.js `fs`, no `Buffer`, etc.).
+The core (`@radium-fs/core`) is **runtime-agnostic** — it contains only type definitions and no platform-specific code (no Node.js `fs`, no `Buffer`, no `crypto`, etc.).
 
-All filesystem I/O is abstracted behind the `RfsFsAdapter` interface. When creating a store, the caller must provide an adapter implementation:
+All platform-specific operations (filesystem I/O and cryptographic hashing) are abstracted behind the `RfsAdapter` interface. When creating a store, the caller must provide an adapter implementation:
 
 ```typescript
 import { createStore } from '@radium-fs/core';
@@ -185,12 +205,18 @@ const store = createStore({
 
 | Package | Runtime | Description |
 |---------|---------|-------------|
-| `@radium-fs/node` | Node.js / Bun | Wraps `node:fs/promises` |
-| `@radium-fs/memory` | Any | In-memory filesystem (tests, browser) |
+| `@radium-fs/node` | Node.js / Bun | Wraps `node:fs/promises` + `node:crypto` |
+| `@radium-fs/memory` | Any | In-memory filesystem + SubtleCrypto (tests, browser) |
 
-### RfsFsAdapter Interface
+### RfsAdapter Interface
 
-The adapter must implement these primitive operations:
+The adapter must implement these operations:
+
+**Crypto:**
+
+- `hash` — Compute SHA-256 digest (returns lowercase hex, 64 chars)
+
+**Filesystem:**
 
 - `readFile` — Read a file as raw bytes (`Uint8Array`)
 - `writeFile` — Write string or `Uint8Array` content
@@ -208,11 +234,11 @@ Binary data uses `Uint8Array` (not `Buffer`) to maintain runtime neutrality. The
 
 ## Design Principles
 
-1. **Deterministic** — Same kind + input always produces the same dataId, providing natural deduplication
-2. **Traceable** — Origin records the complete production method, supporting auditing and regeneration
-3. **Sharded storage** — Shard directories distribute data to avoid overly large directories
-4. **Tool-friendly** — Spaces are real directories, directly operable with grep/rg/find and other standard tools
-5. **Physically isolated** — The local directory and space directory do not interfere with each other; dependency relationships are clear
-6. **Atomic** — Temporary directory + rename ensures no half-built spaces exist
-7. **Dependency tracking** — Manifest records all dependency relationships, supporting dependency graph analysis
-8. **Runtime-agnostic** — Core uses `Uint8Array` instead of `Buffer` and delegates I/O to an adapter, running on any JavaScript runtime
+- **Deterministic** — Same kind + input always produces the same dataId via canonical serialization + SHA-256, providing natural deduplication across any environment
+- **Traceable** — Origin records the complete production method, supporting auditing and regeneration
+- **Sharded storage** — Shard directories distribute data to avoid overly large directories
+- **Tool-friendly** — Spaces are real directories, directly operable with grep/rg/find and other standard tools
+- **Physically isolated** — The local directory and space directory do not interfere with each other; dependency relationships are clear
+- **Atomic** — Temporary directory + rename ensures no half-built spaces exist
+- **Dependency tracking** — Manifest records all dependency relationships, supporting dependency graph analysis
+- **Runtime-agnostic** — Core uses `Uint8Array` instead of `Buffer` and delegates all platform-specific operations (I/O + crypto) to an adapter, running on any JavaScript runtime

@@ -12,6 +12,7 @@ export {
   RFS_LOCAL_DEPS_DIRNAME,
   RFS_DATA_DIRNAME,
   RFS_TEMP_PREFIX,
+  RFS_HASH_ALGORITHM,
   RFS_MANIFEST_VERSION,
 } from './constants';
 
@@ -26,7 +27,7 @@ export type {
 } from './fs-types';
 
 // Adapter
-export type { RfsFsAdapter } from './adapter';
+export type { RfsAdapter } from './adapter';
 
 // Manifest & Origin types
 export type {
