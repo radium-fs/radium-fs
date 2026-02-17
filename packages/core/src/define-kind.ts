@@ -10,7 +10,7 @@ import type { RfsKindDef, RfsKind } from './defs';
 /**
  * Define a Kind (recipe for a space)
  *
- * @param def - Kind definition including kind name, onInit, and optionally commandSchema + onCommand
+ * @param def - Kind definition including kind name, onInit, and optionally onCommand
  * @returns A frozen RfsKind object
  *
  * @example
@@ -38,8 +38,6 @@ export function defineKind<
 
   return Object.freeze({
     kind: def.kind,
-    inputSchema: def.inputSchema,
-    commandSchema: def.commandSchema,
     cacheKey: def.cacheKey,
     onInit: def.onInit,
     onCommand: def.onCommand,

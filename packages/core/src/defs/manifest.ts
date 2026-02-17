@@ -70,7 +70,7 @@ export interface RfsDependency {
  * Records commands sent to onCommand via `space.send()` and their results.
  */
 export interface RfsCommandRecord {
-  /** Command data (validated by commandSchema) */
+  /** Command data */
   command: unknown;
 
   /** Execution timestamp (ISO 8601) */

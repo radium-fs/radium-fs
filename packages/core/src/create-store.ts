@@ -447,12 +447,7 @@ export function createStore(options: RfsStoreOptions): RfsStore {
     ensureOptions?: RfsEnsureOptions,
     extraRuntime?: Record<string, unknown>,
   ): Promise<{ space: RfsSpaceBase; dataDir: string }> {
-    // Validate input
-    const validatedInput = kind.inputSchema
-      ? kind.inputSchema.parse(input)
-      : input;
-
-    const inputRecord = (validatedInput ?? {}) as Record<string, unknown>;
+    const inputRecord = (input ?? {}) as Record<string, unknown>;
     const dataId = await computeDataId(adapter, kind.kind, inputRecord, kind.cacheKey as ((input: unknown) => Record<string, unknown>) | undefined);
 
     // Determine the data directory (shared vs local-scoped)
@@ -533,7 +528,7 @@ export function createStore(options: RfsStoreOptions): RfsStore {
 
         // Build onInit context
         const initContext: RfsOnInitContext<TInput, TRuntime> = {
-          input: validatedInput as TInput,
+          input: input as TInput,
           space: spaceApi,
           signal: signal ?? new AbortController().signal,
           emit: (payload: unknown) => {
@@ -555,7 +550,7 @@ export function createStore(options: RfsStoreOptions): RfsStore {
         const origin: RfsOrigin = {
           kind: kind.kind,
           input: inputRecord,
-          ...(kind.cacheKey ? { cacheKey: kind.cacheKey(validatedInput as TInput) as Record<string, unknown> } : {}),
+          ...(kind.cacheKey ? { cacheKey: kind.cacheKey(input as TInput) as Record<string, unknown> } : {}),
         };
 
         const manifest: RfsManifest = {
@@ -659,18 +654,15 @@ export function createStore(options: RfsStoreOptions): RfsStore {
   ): RfsSpace<TCommand> {
     const base = buildRfsSpaceBase(dataDir, spaceDir, manifest, kind.kind, dataId);
 
-    if (!kind.commandSchema || !kind.onCommand) {
+    if (!kind.onCommand) {
       return base as RfsSpace<TCommand>;
     }
 
     // Add command capabilities
     const commands: RfsSpaceWithCommands<TCommand> = {
       async send(command: TCommand): Promise<{ exports: Record<string, string>; metadata: Record<string, unknown> }> {
-        // Validate command
-        const validatedCommand = kind.commandSchema!.parse(command);
-
         // Emit command:start
-        const startEvent = { type: 'command:start' as const, kind: kind.kind, dataId, command: validatedCommand };
+        const startEvent = { type: 'command:start' as const, kind: kind.kind, dataId, command };
         emitGlobal(startEvent);
         emitCommand(dataId, 'command:start', startEvent);
 
@@ -688,7 +680,7 @@ export function createStore(options: RfsStoreOptions): RfsStore {
           );
 
           const commandContext: RfsOnCommandContext<TCommand, unknown> = {
-            command: validatedCommand as TCommand,
+            command: command as TCommand,
             current: {
               exports: currentManifest.exports,
               metadata: currentManifest.metadata,
@@ -711,7 +703,7 @@ export function createStore(options: RfsStoreOptions): RfsStore {
           const newMetadata = result?.metadata ?? currentManifest.metadata;
 
           const commandRecord: RfsCommandRecord = {
-            command: validatedCommand,
+            command,
             executedAt: new Date().toISOString(),
             result: result ? { exports: newExports, metadata: newMetadata } : undefined,
           };
@@ -730,7 +722,7 @@ export function createStore(options: RfsStoreOptions): RfsStore {
             type: 'command:done' as const,
             kind: kind.kind,
             dataId,
-            command: validatedCommand,
+            command,
             exports: resolvedExports,
             metadata: newMetadata,
           };
@@ -744,7 +736,7 @@ export function createStore(options: RfsStoreOptions): RfsStore {
             type: 'command:error' as const,
             kind: kind.kind,
             dataId,
-            command: validatedCommand,
+            command,
             error,
           };
           emitGlobal(errorEvent);

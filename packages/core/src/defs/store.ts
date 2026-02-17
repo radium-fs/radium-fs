@@ -49,15 +49,15 @@ export interface RfsSpaceBase {
 }
 
 // ---------------------------------------------------------------------------
-// RfsSpace — command capability (only for kinds with commandSchema)
+// RfsSpace — command capability (only for kinds with onCommand)
 // ---------------------------------------------------------------------------
 
-/** Command capability for Space (present when kind has a commandSchema) */
+/** Command capability for Space (present when kind has an onCommand hook) */
 export interface RfsSpaceWithCommands<TCommand> {
   /**
    * Send a command
    *
-   * The command is validated against commandSchema then passed to onCommand.
+   * The command is passed to the onCommand hook.
    *
    * @returns Updated exports and metadata
    */
@@ -94,8 +94,8 @@ export interface RfsSpaceWithCommands<TCommand> {
  * Space object
  *
  * Returned by `store.ensure()`.
- * - If the Kind has no commandSchema (TCommand = never): base properties only
- * - If the Kind has a commandSchema: includes send() / on() / onCustom()
+ * - If the Kind has no onCommand (TCommand = never): base properties only
+ * - If the Kind has onCommand: includes send() / on() / onCustom()
  */
 export type RfsSpace<TCommand = never> = [TCommand] extends [never]
   ? RfsSpaceBase
@@ -226,8 +226,8 @@ export interface RfsStore {
    *
    * Returns an existing space on cache hit; executes onInit on cache miss.
    * The returned RfsSpace type is automatically inferred from the Kind's generics:
-   * - No commandSchema: RfsSpaceBase
-   * - Has commandSchema: RfsSpaceBase & RfsSpaceWithCommands<TCommand>
+   * - No onCommand: RfsSpaceBase
+   * - Has onCommand: RfsSpaceBase & RfsSpaceWithCommands<TCommand>
    */
   ensure<TInput, TCommand, TRuntime>(
     kind: RfsKind<TInput, TCommand, TRuntime>,

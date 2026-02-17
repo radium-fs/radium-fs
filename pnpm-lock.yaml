@@ -32,9 +32,6 @@ importers:
       typescript:
         specifier: ^5.0.0
         version: 5.9.3
-      zod:
-        specifier: ^4.3.6
-        version: 4.3.6
 
   packages/node:
     devDependencies:
@@ -532,9 +529,6 @@ packages:
       synckit:
         optional: true
 
-  zod@4.3.6:
-    resolution: {integrity: sha512-rftlrkhHZOcjDwkGlnUtZZkvaPHCsDATp4pGpuOOMDaTdDDXF91wuVDJoWoPsKX/3YPQ5fHuF3STjcYyKr+Qhg==}
-
 snapshots:
 
   '@babel/generator@8.0.0-rc.1':
@@ -910,5 +904,3 @@ snapshots:
   unrun@0.2.27:
     dependencies:
       rolldown: 1.0.0-rc.3
-
-  zod@4.3.6: {}

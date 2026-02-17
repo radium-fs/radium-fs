@@ -30,12 +30,8 @@
   "bugs": {
     "url": "https://github.com/radium-fs/radium-fs/issues"
   },
-  "peerDependencies": {
-    "zod": "^4.3.6"
-  },
   "devDependencies": {
     "tsdown": "^0.20.3",
-    "typescript": "^5.0.0",
-    "zod": "^4.3.6"
+    "typescript": "^5.0.0"
   }
 }

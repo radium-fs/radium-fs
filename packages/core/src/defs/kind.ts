@@ -5,7 +5,6 @@
  * It contains onInit (initialization) and an optional onCommand (command handling) lifecycle hook.
  */
 
-import type { ZodType } from 'zod';
 import type {
   RfsReadFileOptions,
   RfsReadDirOptions,
@@ -173,7 +172,7 @@ export interface RfsOnInitContext<
   TInput = unknown,
   TRuntime = Record<string, unknown>,
 > {
-  /** Validated input */
+  /** Input data */
   input: TInput;
 
   /** Space operations (file I/O, dependencies, runtime, private storage) */
@@ -191,7 +190,7 @@ export interface RfsOnCommandContext<
   TCommand = unknown,
   TRuntime = Record<string, unknown>,
 > {
-  /** Validated command */
+  /** Command data */
   command: TCommand;
 
   /** Current state (result of the last init/command) */
@@ -211,16 +210,22 @@ export interface RfsOnCommandContext<
 }
 
 // ---------------------------------------------------------------------------
-// Kind Definition — commandSchema and onCommand must appear together
+// Kind Definition
 // ---------------------------------------------------------------------------
 
-/** Base Kind fields (shared by all Kinds) */
-interface RfsKindDefBase<TInput, TRuntime> {
+/**
+ * Kind definition (parameter type for defineKind)
+ *
+ * A Kind is a recipe: it defines a `kind` name, an `onInit` hook for building
+ * the space, and optionally an `onCommand` hook for handling commands.
+ */
+export interface RfsKindDef<
+  TInput = unknown,
+  TCommand = never,
+  TRuntime = Record<string, unknown>,
+> {
   /** Unique Kind identifier */
   kind: string;
-
-  /** Input validation schema (optional) */
-  inputSchema?: ZodType<TInput>;
 
   /**
    * Custom cache key derivation function
@@ -232,35 +237,12 @@ interface RfsKindDefBase<TInput, TRuntime> {
 
   /** Initialization hook */
   onInit: (ctx: RfsOnInitContext<TInput, TRuntime>) => Promise<RfsInitResult | void>;
-}
 
-/** Kind definition without command capability */
-interface RfsKindDefWithoutCommand<TInput, TRuntime>
-  extends RfsKindDefBase<TInput, TRuntime> {
-  commandSchema?: undefined;
-  onCommand?: undefined;
-}
-
-/** Kind definition with command capability (commandSchema + onCommand must both be present) */
-interface RfsKindDefWithCommand<TInput, TCommand, TRuntime>
-  extends RfsKindDefBase<TInput, TRuntime> {
-  /** Command validation schema */
-  commandSchema: ZodType<TCommand>;
-
-  /** Command handler hook */
-  onCommand: (
+  /** Command handler hook (optional — presence enables command capability) */
+  onCommand?: (
     ctx: RfsOnCommandContext<TCommand, TRuntime>,
   ) => Promise<RfsCommandResult>;
 }
-
-/** Full parameter type for defineKind (discriminated union, enforces pairing) */
-export type RfsKindDef<
-  TInput = unknown,
-  TCommand = never,
-  TRuntime = Record<string, unknown>,
-> =
-  | RfsKindDefWithoutCommand<TInput, TRuntime>
-  | RfsKindDefWithCommand<TInput, TCommand, TRuntime>;
 
 // ---------------------------------------------------------------------------
 // Kind (return value of defineKind)
@@ -280,12 +262,6 @@ export interface RfsKind<
   /** Unique Kind identifier */
   readonly kind: string;
 
-  /** Input schema (for runtime validation) */
-  readonly inputSchema?: ZodType<TInput>;
-
-  /** Command schema (for runtime validation) */
-  readonly commandSchema?: ZodType<TCommand>;
-
   /** Cache key derivation function */
   readonly cacheKey?: (input: TInput) => Record<string, unknown>;
 
@@ -298,15 +274,4 @@ export interface RfsKind<
   readonly onCommand?: (
     ctx: RfsOnCommandContext<TCommand, TRuntime>,
   ) => Promise<RfsCommandResult>;
-
-  /**
-   * Type brand (not used at runtime)
-   *
-   * Allows TypeScript to infer TInput, TCommand, and TRuntime from an RfsKind instance.
-   */
-  readonly __types?: {
-    input: TInput;
-    command: TCommand;
-    runtime: TRuntime;
-  };
 }
