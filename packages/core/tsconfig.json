@@ -12,7 +12,7 @@
     "sourceMap": true,
     "composite": true,
     "outDir": "dist",
-    "rootDir": "."
+    "rootDir": "src"
   },
-  "include": ["defs/**/*.ts"]
+  "include": ["src/**/*.ts"]
 }

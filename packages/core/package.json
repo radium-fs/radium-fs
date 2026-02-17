@@ -3,19 +3,38 @@
   "version": "0.0.1",
   "description": "Core types and definitions for radium-fs",
   "type": "module",
-  "main": "dist/defs/index.js",
-  "types": "dist/defs/index.d.ts",
+  "main": "dist/index.mjs",
+  "types": "dist/index.d.mts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
   "scripts": {
-    "build": "tsc",
+    "build": "tsdown",
     "typecheck": "tsc --noEmit"
   },
-  "keywords": [],
+  "keywords": ["radium-fs", "filesystem", "space", "dag", "cache"],
   "author": "wuchangming",
   "license": "MIT",
+  "homepage": "https://github.com/radium-fs/radium-fs#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/radium-fs/radium-fs.git",
+    "directory": "packages/core"
+  },
+  "bugs": {
+    "url": "https://github.com/radium-fs/radium-fs/issues"
+  },
   "peerDependencies": {
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "tsdown": "^0.20.3",
     "typescript": "^5.0.0",
     "zod": "^4.3.6"
   }

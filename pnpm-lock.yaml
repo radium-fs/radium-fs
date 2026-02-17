@@ -10,6 +10,9 @@ importers:
 
   packages/core:
     devDependencies:
+      tsdown:
+        specifier: ^0.20.3
+        version: 0.20.3(typescript@5.9.3)
       typescript:
         specifier: ^5.0.0
         version: 5.9.3
@@ -26,7 +29,7 @@ importers:
         specifier: ^25.2.3
         version: 25.2.3
       tsdown:
-        specifier: latest
+        specifier: ^0.20.3
         version: 0.20.3(typescript@5.9.3)
       typescript:
         specifier: ^5.0.0
