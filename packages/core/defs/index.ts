@@ -67,6 +67,12 @@ export type {
   RfsKind,
 } from './kind';
 
+// Locker types
+export type {
+  RfsLockHandle,
+  RfsLocker,
+} from './store';
+
 // Store & Space types
 export type {
   RfsSpaceBase,

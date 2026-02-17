@@ -102,6 +102,48 @@ export type RfsSpace<TCommand = never> = [TCommand] extends [never]
   : RfsSpaceBase & RfsSpaceWithCommands<TCommand>;
 
 // ---------------------------------------------------------------------------
+// Locker — optional distributed lock provider
+// ---------------------------------------------------------------------------
+
+/**
+ * Handle for an acquired lock
+ *
+ * Returned by `RfsLocker.acquire()`. The caller must call `release()` when
+ * the critical section is complete.
+ */
+export interface RfsLockHandle {
+  /** Release the lock */
+  release(): Promise<void>;
+}
+
+/**
+ * Distributed lock provider
+ *
+ * When provided via `createStore({ locker })`, the store acquires a lock
+ * on the dataId before checking cache and building a space. This prevents
+ * redundant builds when multiple processes or machines share the same store.
+ *
+ * radium-fs is already safe without a locker (atomic rename ensures no
+ * corrupt spaces), but concurrent builds of the same space waste resources.
+ * The locker eliminates this redundancy.
+ *
+ * Implementations can use any backend: file locks, Redis, Zookeeper, etc.
+ */
+export interface RfsLocker {
+  /**
+   * Acquire an exclusive lock for the given key
+   *
+   * The implementation should block (or retry) until the lock is acquired.
+   * The key is typically a dataId.
+   *
+   * @param key - Lock identifier (e.g. dataId)
+   * @param signal - Optional abort signal to cancel the acquisition attempt
+   * @returns A handle that must be used to release the lock
+   */
+  acquire(key: string, signal?: AbortSignal): Promise<RfsLockHandle>;
+}
+
+// ---------------------------------------------------------------------------
 // Store Options
 // ---------------------------------------------------------------------------
 
@@ -115,6 +157,17 @@ export interface RfsStoreOptions {
 
   /** Global runtime context (passed to all spaces via space.runtime) */
   runtime?: Record<string, unknown>;
+
+  /**
+   * Optional distributed lock provider
+   *
+   * When provided, the store acquires an exclusive lock on the dataId before
+   * the cache-check + build sequence in `ensure()`, preventing redundant
+   * builds across multiple processes or machines.
+   *
+   * Not needed for single-process usage.
+   */
+  locker?: RfsLocker;
 }
 
 // ---------------------------------------------------------------------------

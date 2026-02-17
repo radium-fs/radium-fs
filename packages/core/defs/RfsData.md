@@ -175,15 +175,39 @@ Stored in the parent space's `.radium-fs-local-deps/` directory:
 ## Build Flow
 
 1. Compute `dataId = sha256(kind + "\0" + canonicalStringify(cacheKey ?? input))`
-2. Check if `{kind}/{shard}/{dataId}/` exists (cache hit check)
-3. On cache hit: read the manifest and return an RfsSpace directly
-4. On cache miss:
+2. If `locker` is provided: acquire exclusive lock on `dataId`
+3. Check if `{kind}/{shard}/{dataId}/` exists (cache hit check)
+4. On cache hit: read the manifest and return an RfsSpace directly
+5. On cache miss:
    a. Create temporary directory `.tmp-{dataId}-{random}/`
    b. Create `space/` and `local/` subdirectories inside the temp directory
    c. Execute `onInit`, writing files and mounting dependencies
    d. Write `.radium-fs-manifest.json`
    e. Atomically `rename` the temp directory to the final directory
    f. Return RfsSpace
+6. Release lock (in a `finally` block, ensuring release even on error)
+
+## Concurrency
+
+### Single-process (default)
+
+No special configuration needed. radium-fs uses atomic `rename` to finalize spaces, so there are no partial/corrupt spaces even if an error occurs mid-build.
+
+### Multi-process / multi-node
+
+When multiple processes or machines share the same store directory (e.g. via NFS, EFS, or a shared volume), concurrent `ensure()` calls for the same `dataId` may trigger redundant builds. To avoid this, provide an `RfsLocker` implementation:
+
+```typescript
+const store = createStore({
+  root: '/shared-mount/project',
+  adapter: nodeAdapter(),
+  locker: redisLocker(redisClient), // or fileLockLocker(), etc.
+});
+```
+
+The locker wraps the **cache-check + build** sequence in an exclusive lock keyed by `dataId`. This ensures only one process builds a given space; others wait and then get the cached result.
+
+**Important:** The locker is an optimization, not a correctness requirement. Without it, concurrent builds produce identical results (deterministic) and atomic rename prevents corruption. The only cost is wasted compute.
 
 ## Adapter Layer
 
