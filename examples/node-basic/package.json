@@ -1,0 +1,18 @@
+{
+  "name": "@examples/node-basic",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "tsx index.ts",
+    "clean": "rm -rf ../radium-fs-data"
+  },
+  "dependencies": {
+    "@radium-fs/core": "workspace:*",
+    "@radium-fs/node": "workspace:*"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "^5.0.0"
+  }
+}

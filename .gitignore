@@ -140,3 +140,6 @@ vite.config.ts.timestamp-*
 
 .references/
 .cursor/
+
+# radium-fs example output
+examples/radium-fs-data/

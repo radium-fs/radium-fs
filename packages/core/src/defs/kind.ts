@@ -111,9 +111,9 @@ export interface RfsSpaceApi<TRuntime = Record<string, unknown>> {
    * @param options - Optional mount options
    * @returns Absolute path to the dependency's exported directory
    */
-  dep<TDepInput>(
+  dep<TDepInput, TDepCommand = never, TDepRuntime = Record<string, unknown>>(
     mountPath: string,
-    kind: RfsKind<TDepInput, any, any>,
+    kind: RfsKind<TDepInput, TDepCommand, TDepRuntime>,
     input: TDepInput,
     options?: RfsDepOptions,
   ): Promise<string>;

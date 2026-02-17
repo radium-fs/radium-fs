@@ -26,25 +26,31 @@ radium-fs manages a persistent pool of filesystem spaces. Each space is a real f
 
 ```
 radium-fs-data/
-├── lib-a3f2c18e/                          ← kind:lib + {name:"utils"}
-│   ├── .radium-fs-manifest.json
-│   └── space/
-│       └── index.js
+├── lib/
+│   └── a3/
+│       └── a3f2c18e…/                    ← kind:lib + {name:"utils"}
+│           ├── .radium-fs-manifest.json
+│           └── space/
+│               └── index.js
 │
-├── config-9d4e7b01/                       ← kind:config + {env:"prod"}
-│   ├── .radium-fs-manifest.json
-│   └── space/
-│       └── settings.json
+├── config/
+│   └── 9d/
+│       └── 9d4e7b01…/                    ← kind:config + {env:"prod"}
+│           ├── .radium-fs-manifest.json
+│           └── space/
+│               └── settings.json
 │
-└── app-7b9e4d5f/                          ← kind:app + {name:"web"}
-    ├── .radium-fs-manifest.json
-    └── space/
-        ├── main.js
-        ├── lib → ../../lib-a3f2c18e/space/       ← symlink, zero copy
-        └── config → ../../config-9d4e7b01/space/  ← symlink, zero copy
+└── app/
+    └── 7b/
+        └── 7b9e4d5f…/                    ← kind:app + {name:"web"}
+            ├── .radium-fs-manifest.json
+            └── space/
+                ├── main.js
+                ├── lib → ../../../lib/a3/a3f2c18e…/space/      ← symlink
+                └── config → ../../../config/9d/9d4e7b01…/space/ ← symlink
 ```
 
-Every space is a **real directory** with a **deterministic path**. Dependencies are **symlinks** — no duplication, instant wiring, and any tool (grep, find, VS Code) just works.
+Every space is a **real directory** with a **deterministic path** (kind → shard → hash). Dependencies are **symlinks** — no duplication, instant wiring, and any tool (grep, find, VS Code) just works.
 
 ### Quick Example
 
@@ -76,13 +82,13 @@ const appSpace = await store.ensure(app, {});
 
 | Package | Description |
 |---------|-------------|
-| `@radium-fs/core` | Runtime-agnostic type definitions and constants |
+| `@radium-fs/core` | Runtime-agnostic core engine (defineKind, createStore, types) |
 | `@radium-fs/node` | Node.js filesystem adapter (requires Node.js >= 22) |
 | `@radium-fs/memory` | In-memory filesystem adapter *(planned)* |
 
 ## Status
 
-Work in progress. Core API definitions are in place, implementation coming soon.
+Core engine and Node.js adapter are implemented. See `examples/node-basic/` for a runnable demo.
 
 ## License
 
