@@ -11,6 +11,7 @@
     "type": "git",
     "url": "git+https://github.com/radium-fs/radium-fs.git"
   },
+  "packageManager": "pnpm@10.22.0",
   "license": "MIT",
   "author": "wuchangming",
   "scripts": {
