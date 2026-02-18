@@ -16,11 +16,11 @@ const VARIANTS = {
     labelColor: 'text-warning',
   },
   note: {
-    border: 'border-radium-300/40',
-    bg: 'bg-radium-300/5',
+    border: 'border-accent/40',
+    bg: 'bg-accent/5',
     icon: 'ℹ️',
     label: 'Note',
-    labelColor: 'text-radium-300',
+    labelColor: 'text-accent',
   },
 } as const;
 

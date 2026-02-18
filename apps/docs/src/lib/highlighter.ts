@@ -12,7 +12,10 @@ export async function getHighlighter(): Promise<HighlighterCore> {
   if (initPromise) return initPromise;
 
   initPromise = createHighlighterCore({
-    themes: [import('shiki/themes/vitesse-dark.mjs')],
+    themes: [
+      import('shiki/themes/vitesse-dark.mjs'),
+      import('shiki/themes/vitesse-light.mjs'),
+    ],
     langs: [
       import('shiki/langs/typescript.mjs'),
       import('shiki/langs/json.mjs'),
@@ -35,7 +38,11 @@ export function highlight(code: string, lang: string): string {
   try {
     return highlighter.codeToHtml(code, {
       lang: useLang,
-      theme: 'vitesse-dark',
+      themes: {
+        light: 'vitesse-light',
+        dark: 'vitesse-dark',
+      },
+      defaultColor: false,
     });
   } catch {
     return `<pre><code>${escapeHtml(code)}</code></pre>`;

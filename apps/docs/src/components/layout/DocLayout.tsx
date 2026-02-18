@@ -6,6 +6,7 @@ import { PageNav } from './PageNav';
 import { MobileNav } from './MobileNav';
 import { SearchModal } from './SearchModal';
 import { MdxProvider } from '../mdx/Provider';
+import { ThemeToggle } from '../ThemeToggle';
 
 export function DocLayout({ children }: { children: ReactNode }) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -81,6 +82,8 @@ export function DocLayout({ children }: { children: ReactNode }) {
         </button>
 
         <div className="flex-1" />
+
+        <ThemeToggle />
 
         <a
           href="https://github.com/radium-fs/radium-fs"

@@ -1,5 +1,6 @@
 import { Link } from 'react-router';
 import type { Scenario } from '../engine/types';
+import { ThemeToggle } from './ThemeToggle';
 
 interface HeaderProps {
   scenarios: Scenario[];
@@ -82,6 +83,8 @@ export function Header({
           </button>
         </div>
 
+        <ThemeToggle />
+
         <a
           href="https://github.com/radium-fs/radium-fs"
           target="_blank"
@@ -102,7 +105,7 @@ export function Header({
               onClick={() => onSelect(s.id)}
               className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
                 s.id === activeId
-                  ? 'bg-radium-800 text-accent'
+                  ? 'bg-accent/15 text-accent'
                   : 'text-text-secondary hover:text-text-primary hover:bg-surface-raised'
               }`}
             >

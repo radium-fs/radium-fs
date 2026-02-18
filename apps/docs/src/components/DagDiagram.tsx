@@ -8,13 +8,13 @@ interface DagDiagramProps {
 }
 
 const STATUS_FILL: Record<string, string> = {
-  built: '#4ade80',
-  cached: '#22543d',
-  rebuilding: '#f59e0b',
+  built: 'var(--color-dag-built)',
+  cached: 'var(--color-dag-cached)',
+  rebuilding: 'var(--color-warning)',
 };
 
 const STATUS_GLOW: Record<string, string> = {
-  built: 'rgba(74, 222, 128, 0.25)',
+  built: 'var(--color-dag-glow)',
 };
 
 const NODE_W = 140;
@@ -96,7 +96,7 @@ export function DagDiagram({ preset, diagram, className }: DagDiagramProps) {
               markerHeight="6"
               orient="auto-start-reverse"
             >
-              <path d="M 0 0 L 10 3.5 L 0 7 z" fill="#2d5a42" />
+              <path d="M 0 0 L 10 3.5 L 0 7 z" fill="var(--color-dag-edge)" />
             </marker>
           </defs>
 
@@ -117,7 +117,7 @@ export function DagDiagram({ preset, diagram, className }: DagDiagramProps) {
                 <path
                   d={`M ${x1} ${y1} C ${x1} ${midY}, ${x2} ${midY}, ${x2} ${y2}`}
                   fill="none"
-                  stroke="#2d5a42"
+                  stroke="var(--color-dag-edge)"
                   strokeWidth="1.5"
                   strokeDasharray="4 3"
                   markerEnd="url(#dag-arrow)"
@@ -127,7 +127,7 @@ export function DagDiagram({ preset, diagram, className }: DagDiagramProps) {
                     x={(x1 + x2) / 2 + (x1 === x2 ? 0 : x1 < x2 ? 10 : -10)}
                     y={midY}
                     textAnchor="middle"
-                    fill="#5a8a6e"
+                    fill="var(--color-dag-text-dim)"
                     fontSize={9}
                     fontFamily="var(--font-mono)"
                   >
@@ -142,7 +142,7 @@ export function DagDiagram({ preset, diagram, className }: DagDiagramProps) {
           {nodes.map((node) => {
             const pos = positions.get(node.id);
             if (!pos) return null;
-            const color = STATUS_FILL[node.status] ?? '#1e3a2e';
+            const color = STATUS_FILL[node.status] ?? 'var(--color-border)';
             const glow = STATUS_GLOW[node.status];
 
             return (
@@ -168,7 +168,7 @@ export function DagDiagram({ preset, diagram, className }: DagDiagramProps) {
                   width={NODE_W}
                   height={NODE_H}
                   rx={6}
-                  fill="#0d1a14"
+                  fill="var(--color-dag-node-bg)"
                   stroke={color}
                   strokeWidth={1.5}
                 />
@@ -185,7 +185,7 @@ export function DagDiagram({ preset, diagram, className }: DagDiagramProps) {
                 <text
                   x={pos.x + 14}
                   y={pos.y + (node.detail ? 20 : NODE_H / 2 + 4)}
-                  fill="#e2efe8"
+                  fill="var(--color-dag-text)"
                   fontSize={12}
                   fontFamily="var(--font-mono)"
                   fontWeight={500}
@@ -197,7 +197,7 @@ export function DagDiagram({ preset, diagram, className }: DagDiagramProps) {
                   <text
                     x={pos.x + 14}
                     y={pos.y + 36}
-                    fill="#5a8a6e"
+                    fill="var(--color-dag-text-dim)"
                     fontSize={10}
                     fontFamily="var(--font-mono)"
                   >

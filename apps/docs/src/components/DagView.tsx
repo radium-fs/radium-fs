@@ -7,10 +7,10 @@ interface DagViewProps {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  building: '#f59e0b',
-  built: '#4ade80',
-  cached: '#22543d',
-  error: '#ef4444',
+  building: 'var(--color-warning)',
+  built: 'var(--color-dag-built)',
+  cached: 'var(--color-dag-cached)',
+  error: 'var(--color-error)',
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -326,7 +326,7 @@ export function DagView({ events, fullWidth }: DagViewProps) {
                   key={`${edge.from}-${edge.to}`}
                   d={`M ${x1} ${y1} C ${x1} ${midY}, ${x2} ${midY}, ${x2} ${y2}`}
                   fill="none"
-                  stroke="#1e3a2e"
+                  stroke="var(--color-dag-edge)"
                   strokeWidth="1.5"
                 />
               );
@@ -335,7 +335,7 @@ export function DagView({ events, fullWidth }: DagViewProps) {
             {nodes.map((node) => {
               const pos = nodePos.get(node.dataId);
               if (!pos) return null;
-              const color = STATUS_COLORS[node.status] ?? '#1e3a2e';
+              const color = STATUS_COLORS[node.status] ?? 'var(--color-border)';
 
               return (
                 <g
@@ -366,7 +366,7 @@ export function DagView({ events, fullWidth }: DagViewProps) {
                     x={pos.x + NODE_W / 2}
                     y={fullWidth ? pos.y + NODE_H / 2 + 4 : pos.y + 18}
                     textAnchor="middle"
-                    fill="#e2efe8"
+                    fill="var(--color-dag-text)"
                     fontSize={11}
                     fontFamily="var(--font-mono)"
                   >
@@ -377,7 +377,7 @@ export function DagView({ events, fullWidth }: DagViewProps) {
                       x={pos.x + NODE_W / 2}
                       y={pos.y + 32}
                       textAnchor="middle"
-                      fill="#6b8f7b"
+                      fill="var(--color-dag-text-dim)"
                       fontSize={8}
                       fontFamily="var(--font-mono)"
                     >
@@ -408,7 +408,7 @@ export function DagView({ events, fullWidth }: DagViewProps) {
                 className="w-1.5 h-1.5 rounded-full"
                 style={{
                   backgroundColor:
-                    STATUS_COLORS[tooltip.node.status] ?? '#1e3a2e',
+                    STATUS_COLORS[tooltip.node.status] ?? 'var(--color-border)',
                 }}
               />
               <span className="text-[10px] text-text-secondary">

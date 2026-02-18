@@ -13,18 +13,69 @@
   --color-radium-900: #111a16;
   --color-radium-950: #0a0f0d;
 
-  --color-surface: #0a0f0d;
-  --color-surface-raised: #111a16;
-  --color-surface-code: #151f1a;
-  --color-border: #1e3a2e;
-  --color-text-primary: #e2efe8;
-  --color-text-secondary: #7a9b8a;
-  --color-accent: #4ade80;
-  --color-warning: #f59e0b;
-  --color-error: #ef4444;
+  --color-surface: var(--th-surface);
+  --color-surface-raised: var(--th-surface-raised);
+  --color-surface-code: var(--th-surface-code);
+  --color-border: var(--th-border);
+  --color-text-primary: var(--th-text-primary);
+  --color-text-secondary: var(--th-text-secondary);
+  --color-accent: var(--th-accent);
+  --color-warning: var(--th-warning);
+  --color-error: var(--th-error);
+
+  /* SVG-specific tokens used by DAG components */
+  --color-dag-node-bg: var(--th-dag-node-bg);
+  --color-dag-edge: var(--th-dag-edge);
+  --color-dag-text: var(--th-dag-text);
+  --color-dag-text-dim: var(--th-dag-text-dim);
+  --color-dag-glow: var(--th-dag-glow);
+  --color-dag-built: var(--th-dag-built);
+  --color-dag-cached: var(--th-dag-cached);
 
   --font-mono: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+/* ── Light theme (default) ── */
+:root {
+  --th-surface: #f8faf9;
+  --th-surface-raised: #ffffff;
+  --th-surface-code: #eef3f0;
+  --th-border: #d0ddd6;
+  --th-text-primary: #111a16;
+  --th-text-secondary: #5a7a6a;
+  --th-accent: #16a34a;
+  --th-warning: #d97706;
+  --th-error: #dc2626;
+
+  --th-dag-node-bg: #ffffff;
+  --th-dag-edge: #9cbdab;
+  --th-dag-text: #111a16;
+  --th-dag-text-dim: #5a7a6a;
+  --th-dag-glow: rgba(22, 163, 74, 0.2);
+  --th-dag-built: #16a34a;
+  --th-dag-cached: #86efac;
+}
+
+/* ── Dark theme ── */
+.dark {
+  --th-surface: #0a0f0d;
+  --th-surface-raised: #111a16;
+  --th-surface-code: #151f1a;
+  --th-border: #1e3a2e;
+  --th-text-primary: #e2efe8;
+  --th-text-secondary: #7a9b8a;
+  --th-accent: #4ade80;
+  --th-warning: #f59e0b;
+  --th-error: #ef4444;
+
+  --th-dag-node-bg: #0d1a14;
+  --th-dag-edge: #2d5a42;
+  --th-dag-text: #e2efe8;
+  --th-dag-text-dim: #5a8a6e;
+  --th-dag-glow: rgba(74, 222, 128, 0.3);
+  --th-dag-built: #4ade80;
+  --th-dag-cached: #22543d;
 }
 
 html,
@@ -42,7 +93,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Shiki code blocks */
+/* Shiki code blocks — dual-theme via CSS variables */
 .shiki {
   background-color: transparent !important;
   margin: 0;
@@ -53,6 +104,14 @@ body {
   font-family: var(--font-mono);
   font-size: 13px;
   line-height: 1.6;
+}
+
+.shiki span {
+  color: var(--shiki-light);
+}
+
+.dark .shiki span {
+  color: var(--shiki-dark);
 }
 
 /* MDX prose styling */

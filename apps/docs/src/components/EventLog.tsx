@@ -8,7 +8,7 @@ interface EventLogProps {
 const TYPE_COLORS: Record<string, string> = {
   'init:start': 'text-warning',
   'init:done': 'text-accent',
-  'init:cached': 'text-radium-500',
+  'init:cached': 'text-text-secondary',
   'init:error': 'text-error',
   'command:start': 'text-warning',
   'command:done': 'text-accent',

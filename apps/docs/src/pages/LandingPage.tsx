@@ -1,5 +1,6 @@
 import { Link } from 'react-router';
 import { HeroDag } from '../components/HeroDag';
+import { ThemeToggle } from '../components/ThemeToggle';
 import { InstallBlock } from '../components/mdx/InstallBlock';
 
 const PILLARS = [
@@ -49,6 +50,8 @@ export function LandingPage() {
         </div>
 
         <div className="flex-1" />
+
+        <ThemeToggle />
 
         <a
           href="https://github.com/radium-fs/radium-fs"

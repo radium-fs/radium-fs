@@ -26,14 +26,14 @@ const PHASE_TIMING: [Phase, number][] = [
 ];
 
 const COLORS = {
-  building: '#f59e0b',
-  built: '#4ade80',
-  cached: '#22543d',
-  bg: '#0d1a14',
-  edge: '#2d5a42',
-  text: '#e2efe8',
-  textDim: '#5a8a6e',
-  glow: 'rgba(74, 222, 128, 0.3)',
+  building: 'var(--color-warning)',
+  built: 'var(--color-dag-built)',
+  cached: 'var(--color-dag-cached)',
+  bg: 'var(--color-dag-node-bg)',
+  edge: 'var(--color-dag-edge)',
+  text: 'var(--color-dag-text)',
+  textDim: 'var(--color-dag-text-dim)',
+  glow: 'var(--color-dag-glow)',
 };
 
 const NODE_W = 150;

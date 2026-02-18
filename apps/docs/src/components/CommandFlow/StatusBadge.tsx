@@ -20,7 +20,7 @@ const CONFIG: Record<StepStatus, { label: string; className: string }> = {
   },
   cached: {
     label: 'cached',
-    className: 'bg-radium-800 text-radium-500',
+    className: 'bg-accent/10 text-text-secondary',
   },
   error: {
     label: 'error',
