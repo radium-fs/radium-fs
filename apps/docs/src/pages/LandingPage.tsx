@@ -76,9 +76,9 @@ export function LandingPage({ locale }: LandingPageProps) {
   const docsPath = locale === 'zh' ? '/zh/docs' : '/docs';
 
   return (
-    <div className="min-h-screen bg-surface flex flex-col">
+    <div className="min-h-screen bg-surface flex flex-col pt-14">
       {/* Header */}
-      <header className="flex items-center gap-3 px-4 py-2.5 border-b border-border">
+      <header className="fixed top-0 left-0 right-0 z-50 h-14 flex items-center gap-3 px-4 border-b border-border bg-surface">
         <Link to={locale === 'zh' ? '/zh' : '/'} className="flex items-center gap-2">
           <img
             src={`${import.meta.env.BASE_URL}radium-fs-logo.png`}
