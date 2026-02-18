@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, type ReactNode } from 'react';
-import { Link, useLocation } from 'react-router';
+import { Link, useLocation, useNavigate } from 'react-router';
 import { Sidebar } from './Sidebar';
 import { TableOfContents } from './TableOfContents';
 import { PageNav } from './PageNav';
@@ -37,11 +37,10 @@ const uiCopy: Record<Locale, {
 export function DocLayout({ children, locale }: DocLayoutProps) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const navigate = useNavigate();
   const { pathname } = useLocation();
   const copy = uiCopy[locale];
   const homePath = locale === 'zh' ? '/zh' : '/';
-  const enPath = switchPathLocale(pathname, 'en');
-  const zhPath = switchPathLocale(pathname, 'zh');
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
@@ -114,20 +113,33 @@ export function DocLayout({ children, locale }: DocLayoutProps) {
 
         <div className="flex-1" />
 
-        <div className="flex items-center gap-1 text-xs text-text-secondary">
-          <Link
-            to={enPath}
-            className={`transition-colors ${locale === 'en' ? 'text-accent font-medium' : 'hover:text-text-primary'}`}
+        <div className="relative">
+          <label htmlFor="docs-lang" className="sr-only">
+            Language
+          </label>
+          <select
+            id="docs-lang"
+            value={locale}
+            onChange={(e) => {
+              const target = e.target.value as Locale;
+              if (target !== locale) {
+                navigate(switchPathLocale(pathname, target));
+              }
+            }}
+            className="h-8 rounded-md border border-border bg-surface-raised text-xs text-text-secondary pl-2.5 pr-7 appearance-none focus:outline-none focus:border-accent/40"
           >
-            EN
-          </Link>
-          <span>/</span>
-          <Link
-            to={zhPath}
-            className={`transition-colors ${locale === 'zh' ? 'text-accent font-medium' : 'hover:text-text-primary'}`}
+            <option value="en">English</option>
+            <option value="zh">中文</option>
+          </select>
+          <svg
+            className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-text-secondary pointer-events-none"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
           >
-            中文
-          </Link>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+          </svg>
         </div>
 
         <ThemeToggle />

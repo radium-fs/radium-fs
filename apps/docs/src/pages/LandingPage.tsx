@@ -1,4 +1,4 @@
-import { Link, useLocation } from 'react-router';
+import { Link, useLocation, useNavigate } from 'react-router';
 import { HeroDag } from '../components/HeroDag';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { InstallBlock } from '../components/mdx/InstallBlock';
@@ -71,10 +71,9 @@ interface LandingPageProps {
 
 export function LandingPage({ locale }: LandingPageProps) {
   const { pathname } = useLocation();
+  const navigate = useNavigate();
   const copy = copyByLocale[locale];
   const docsPath = locale === 'zh' ? '/zh/docs' : '/docs';
-  const enPath = switchPathLocale(pathname, 'en');
-  const zhPath = switchPathLocale(pathname, 'zh');
 
   return (
     <div className="min-h-screen bg-surface flex flex-col">
@@ -108,20 +107,33 @@ export function LandingPage({ locale }: LandingPageProps) {
 
         <div className="flex-1" />
 
-        <div className="flex items-center gap-1 text-xs text-text-secondary">
-          <Link
-            to={enPath}
-            className={`transition-colors ${locale === 'en' ? 'text-accent font-medium' : 'hover:text-text-primary'}`}
+        <div className="relative">
+          <label htmlFor="landing-lang" className="sr-only">
+            Language
+          </label>
+          <select
+            id="landing-lang"
+            value={locale}
+            onChange={(e) => {
+              const target = e.target.value as Locale;
+              if (target !== locale) {
+                navigate(switchPathLocale(pathname, target));
+              }
+            }}
+            className="h-8 rounded-md border border-border bg-surface-raised text-xs text-text-secondary pl-2.5 pr-7 appearance-none focus:outline-none focus:border-accent/40"
           >
-            EN
-          </Link>
-          <span>/</span>
-          <Link
-            to={zhPath}
-            className={`transition-colors ${locale === 'zh' ? 'text-accent font-medium' : 'hover:text-text-primary'}`}
+            <option value="en">English</option>
+            <option value="zh">中文</option>
+          </select>
+          <svg
+            className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-text-secondary pointer-events-none"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
           >
-            中文
-          </Link>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+          </svg>
         </div>
 
         <ThemeToggle />
