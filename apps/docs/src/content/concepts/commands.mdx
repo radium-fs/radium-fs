@@ -1,0 +1,88 @@
+import { Callout } from '../../components/mdx';
+
+# Commands
+
+**Commands** let you mutate a space after initialization. While `onInit` runs once during creation, `onCommand` can be called repeatedly via `space.send()`.
+
+## When to Use Commands
+
+Commands are useful for:
+
+- **Incremental updates** — add data to an existing space without rebuilding.
+- **Interactive workflows** — respond to user actions or external events.
+- **Stateful spaces** — maintain mutable state that evolves over time.
+
+<Callout type="note">
+Commands are optional. Most spaces only need `onInit`. Use commands when you need post-creation mutations.
+</Callout>
+
+## Defining a Kind with Commands
+
+Add a second type parameter to `defineKind` for the command type, and implement `onCommand`:
+
+```typescript
+type CounterCommand = { type: 'increment'; amount: number };
+
+const Counter = defineKind<{ name: string }, CounterCommand>({
+  kind: 'counter',
+  async onInit({ input, space }) {
+    await space.writeFile(
+      'state.json',
+      new TextEncoder().encode(JSON.stringify({ name: input.name, count: 0 })),
+    );
+    return { exports: { state: 'state.json' } };
+  },
+  async onCommand({ command, space, emit }) {
+    const raw = await space.readFile('state.json');
+    const state = JSON.parse(raw);
+    state.count += command.amount;
+    await space.writeFile(
+      'state.json',
+      new TextEncoder().encode(JSON.stringify(state)),
+    );
+    emit({ type: 'counter:updated', count: state.count });
+  },
+});
+```
+
+The `onCommand` hook receives:
+
+- **command** — the command object sent via `space.send()`.
+- **space** — filesystem API (read, write, but no `dep()`).
+- **emit** — function to emit custom events to subscribers.
+
+## Sending Commands
+
+After creating the space, use `space.send()` to dispatch commands:
+
+```typescript
+const space = await store.ensure(Counter, { name: 'my-counter' });
+
+await space.send({ type: 'increment', amount: 1 });
+// state.json → { name: "my-counter", count: 1 }
+
+await space.send({ type: 'increment', amount: 5 });
+// state.json → { name: "my-counter", count: 6 }
+```
+
+Each command mutates the space in place. The `state.json` file reflects the cumulative state.
+
+## Events
+
+Commands emit events through the store:
+
+| Event | When |
+|-------|------|
+| `command:start` | Before `onCommand` runs |
+| `command:done` | After `onCommand` completes |
+| `custom` | Emitted by `emit()` inside `onCommand` |
+
+Subscribe to all events via `store.on()`, or use `space.onCustom()` for custom events only.
+
+## Command History
+
+Every command execution is recorded in the space's manifest under the `commands` array. This provides a full audit trail.
+
+## Next
+
+Explore the [API Reference](/docs/api/define-kind) for the complete function signatures.

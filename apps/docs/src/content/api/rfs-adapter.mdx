@@ -1,0 +1,93 @@
+import { ApiSignature, PropsTable, Callout } from '../../components/mdx';
+
+# RfsAdapter
+
+The **RfsAdapter** is the platform-specific I/O layer. It abstracts all filesystem operations and cryptographic hashing, making the radium-fs core runtime-agnostic. Implement this interface to support different platforms (Node.js, memfs, Deno, browser OPFS, etc.).
+
+## What It Is
+
+- **Filesystem operations**: read, write, mkdir, stat, remove, rename, symlink, glob, grep
+- **Cryptographic hashing**: SHA-256 for deterministic dataId generation
+- **Platform-specific**: Each runtime (Node, browser, Deno) provides its own adapter
+
+## Interface Methods
+
+<PropsTable items={[
+  { name: 'hash', type: '(data: Uint8Array) => Promise<string>', desc: 'Compute SHA-256 digest; must return lowercase hex (64 chars)', required: true },
+  { name: 'readFile', type: '(path: string) => Promise<Uint8Array>', desc: 'Read a file as raw bytes', required: true },
+  { name: 'writeFile', type: '(path: string, content: string | Uint8Array) => Promise<void>', desc: 'Write content; creates parent directories if needed', required: true },
+  { name: 'mkdir', type: '(path: string) => Promise<void>', desc: 'Create a directory (always recursive)', required: true },
+  { name: 'readDir', type: '(path: string) => Promise<string[]>', desc: 'List entries in a directory', required: true },
+  { name: 'stat', type: '(path: string) => Promise<RfsStatResult>', desc: 'Get file/directory metadata', required: true },
+  { name: 'exists', type: '(path: string) => Promise<boolean>', desc: 'Check whether a path exists', required: true },
+  { name: 'remove', type: '(path: string, options?) => Promise<void>', desc: 'Remove a file or directory', required: true },
+  { name: 'rename', type: '(src: string, dest: string) => Promise<void>', desc: 'Atomically rename/move; used for temp finalization', required: true },
+  { name: 'symlink', type: '(target: string, linkPath: string) => Promise<void>', desc: 'Create a symbolic link; used for mounting dependencies', required: true },
+  { name: 'glob', type: '(root: string, pattern: string, options?) => Promise<string[]>', desc: 'Find files matching a glob pattern; returns paths relative to root', required: true },
+  { name: 'grep', type: '(root: string, pattern: string, options?) => Promise<string[]>', desc: 'Search file contents for a pattern', required: true },
+]} />
+
+## Built-in Implementations
+
+### @radium-fs/node
+
+Node.js adapter using `node:fs` and `node:crypto`:
+
+```typescript
+import { createStore } from '@radium-fs/core';
+import { nodeAdapter } from '@radium-fs/node';
+
+const store = createStore({
+  root: '/project',
+  adapter: nodeAdapter(),
+});
+```
+
+### @radium-fs/memory
+
+In-memory adapter for testing and ephemeral usage:
+
+```typescript
+import { createStore } from '@radium-fs/core';
+import { memoryAdapter } from '@radium-fs/memory';
+
+const store = createStore({
+  root: '/virtual',
+  adapter: memoryAdapter(),
+});
+```
+
+## Custom Adapter
+
+Implement the `RfsAdapter` interface for your platform:
+
+```typescript
+import type { RfsAdapter } from '@radium-fs/core';
+
+const myAdapter: RfsAdapter = {
+  async hash(data) {
+    const buffer = await crypto.subtle.digest('SHA-256', data);
+    return Array.from(new Uint8Array(buffer))
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join('');
+  },
+  async readFile(path) {
+    const f = await Deno.open(path);
+    const bytes = await Deno.readAll(f);
+    f.close();
+    return bytes;
+  },
+  async writeFile(path, content) {
+    await Deno.writeTextFile(path, typeof content === 'string' ? content : new TextDecoder().decode(content));
+  },
+  // ... implement all other methods
+};
+```
+
+<Callout type="tip">
+Use `@radium-fs/memory` for unit tests — no filesystem required, and each test can use a fresh adapter instance.
+</Callout>
+
+## Next
+
+Learn about lifecycle events in [Events](/docs/api/events).

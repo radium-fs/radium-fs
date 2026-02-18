@@ -1,0 +1,74 @@
+import { Callout } from '../../components/mdx';
+import { DagDiagram } from '../../components/DagDiagram';
+
+# Space & Kind
+
+Every managed artifact in radium-fs lives inside a **Space**. Every space is created by a **Kind**.
+
+## What is a Space?
+
+A space is a folder on disk with three properties:
+
+1. **Deterministic path** — derived from `kind + input`, always the same for the same recipe.
+2. **Manifest** — a `.radium-fs-manifest.json` file tracking origin, exports, dependencies, and timestamps.
+3. **Content** — the files your `onInit` hook writes during initialization.
+
+Spaces are real directories. You can `ls`, `cat`, or `grep` them just like any folder. radium-fs simply gives them an identity, cache semantics, and a dependency graph.
+
+## What is a Kind?
+
+A Kind is a factory definition created with `defineKind()`. It tells radium-fs:
+
+- **name** — what kind of artifact this produces (e.g. `"component"`, `"schema"`, `"config"`).
+- **input** — a TypeScript type describing the parameters the space depends on.
+- **onInit** — a hook that populates the space's directory on first creation.
+- **exports** — named output paths that other spaces can consume.
+
+```typescript
+const Greeter = defineKind({
+  kind: 'greeter',
+  onInit: async ({ input, space }) => {
+    await space.writeFile(
+      'hello.txt',
+      new TextEncoder().encode(`Hello, ${input.message}!`),
+    );
+    return { exports: { greeting: 'hello.txt' } };
+  },
+});
+```
+
+The `onInit` hook runs once, writes files, and returns an exports map. The space object provides a filesystem-like API (`writeFile`, `mkdir`, etc.) scoped to the space's root directory.
+
+After `ensure()`, the space exists on disk:
+
+<DagDiagram preset="single-space" />
+
+## `dataId`: Deterministic Identity
+
+The most important concept is the **dataId** — a SHA-256 hash of the kind name and the serialized input. Two calls with the same kind and input will always produce the same `dataId`, which means they resolve to the same path.
+
+<Callout type="tip">
+Because the identity is deterministic, radium-fs can skip initialization entirely when the space already exists. This is how caching works — no timestamps, no file watchers, just content addressing.
+</Callout>
+
+## Manifest
+
+Every space contains a `.radium-fs-manifest.json`:
+
+```json
+{
+  "origin": { "kind": "greeter", "inputHash": "a1b2c3..." },
+  "exports": { "greeting": "hello.txt" },
+  "dependencies": {},
+  "commands": [],
+  "metadata": {},
+  "createdAt": "2025-01-01T00:00:00.000Z",
+  "updatedAt": "2025-01-01T00:00:00.000Z"
+}
+```
+
+The manifest is managed automatically — you never need to write it by hand.
+
+## Next
+
+Learn how `createStore()` orchestrates spaces in [Store & ensure()](/docs/concepts/store-and-ensure).

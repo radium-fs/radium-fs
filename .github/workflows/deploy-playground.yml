@@ -1,4 +1,4 @@
-name: Deploy Playground
+name: Deploy Docs
 
 on:
   push:
@@ -33,11 +33,11 @@ jobs:
 
       - run: pnpm --filter @radium-fs/core build
       - run: pnpm --filter @radium-fs/memory build
-      - run: pnpm --filter playground build
+      - run: pnpm --filter @radium-fs/docs build
 
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: apps/playground/dist
+          path: apps/docs/dist
 
       - id: deployment
         uses: actions/deploy-pages@v4

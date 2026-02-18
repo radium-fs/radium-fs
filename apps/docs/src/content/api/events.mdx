@@ -1,0 +1,220 @@
+import { PropsTable, Callout } from '../../components/mdx';
+
+# Events
+
+The radium-fs event system provides observability into space lifecycle, command execution, and custom emissions. Events are delivered through store-level, space-level, and ensure-level subscriptions.
+
+## Event Types
+
+### Init Events
+
+#### init:start
+
+Fired when init begins (cache miss, about to execute onInit).
+
+<PropsTable items={[
+  { name: 'kind', type: 'string', desc: 'Kind identifier' },
+  { name: 'dataId', type: 'string', desc: 'Deterministic unique identifier' },
+  { name: 'input', type: 'unknown', desc: 'Runtime input passed to ensure()' },
+]} />
+
+#### init:cached
+
+Fired on cache hit (onInit skipped).
+
+<PropsTable items={[
+  { name: 'kind', type: 'string', desc: 'Kind identifier' },
+  { name: 'dataId', type: 'string', desc: 'Deterministic unique identifier' },
+  { name: 'input', type: 'unknown', desc: 'Runtime input passed to ensure()' },
+  { name: 'path', type: 'string', desc: 'Absolute path to the existing space directory' },
+]} />
+
+#### init:done
+
+Fired when init completes successfully.
+
+<PropsTable items={[
+  { name: 'kind', type: 'string', desc: 'Kind identifier' },
+  { name: 'dataId', type: 'string', desc: 'Deterministic unique identifier' },
+  { name: 'input', type: 'unknown', desc: 'Runtime input passed to ensure()' },
+  { name: 'path', type: 'string', desc: 'Absolute path to the space directory' },
+  { name: 'exports', type: 'Record<string, string>', desc: 'Exports mapping (absolute paths)' },
+  { name: 'metadata', type: 'Record<string, unknown>', desc: 'User-defined metadata from onInit' },
+]} />
+
+#### init:error
+
+Fired when init fails.
+
+<PropsTable items={[
+  { name: 'kind', type: 'string', desc: 'Kind identifier' },
+  { name: 'dataId', type: 'string', desc: 'Deterministic unique identifier' },
+  { name: 'input', type: 'unknown', desc: 'Runtime input passed to ensure()' },
+  { name: 'error', type: 'Error', desc: 'The thrown error' },
+]} />
+
+### Command Events
+
+#### command:start
+
+Fired when command execution begins.
+
+<PropsTable items={[
+  { name: 'kind', type: 'string', desc: 'Kind identifier' },
+  { name: 'dataId', type: 'string', desc: 'Deterministic unique identifier' },
+  { name: 'command', type: 'unknown', desc: 'The command object sent via space.send()' },
+]} />
+
+#### command:done
+
+Fired when command execution completes.
+
+<PropsTable items={[
+  { name: 'kind', type: 'string', desc: 'Kind identifier' },
+  { name: 'dataId', type: 'string', desc: 'Deterministic unique identifier' },
+  { name: 'command', type: 'unknown', desc: 'The command object sent via space.send()' },
+  { name: 'exports', type: 'Record<string, string>', desc: 'Updated exports mapping' },
+  { name: 'metadata', type: 'Record<string, unknown>', desc: 'Updated metadata from onCommand' },
+]} />
+
+#### command:error
+
+Fired when command execution fails.
+
+<PropsTable items={[
+  { name: 'kind', type: 'string', desc: 'Kind identifier' },
+  { name: 'dataId', type: 'string', desc: 'Deterministic unique identifier' },
+  { name: 'command', type: 'unknown', desc: 'The command object sent via space.send()' },
+  { name: 'error', type: 'Error', desc: 'The thrown error' },
+]} />
+
+### Custom Event
+
+#### custom
+
+Custom event emitted via `emit()` in onInit or onCommand.
+
+<PropsTable items={[
+  { name: 'kind', type: 'string', desc: 'Kind identifier' },
+  { name: 'dataId', type: 'string', desc: 'Deterministic unique identifier' },
+  { name: 'payload', type: 'T', desc: 'User-defined payload' },
+]} />
+
+## RfsEvent Union Type
+
+All events conform to the `RfsEvent` union:
+
+```typescript
+type RfsEvent =
+  | RfsInitStartEvent
+  | RfsInitCachedEvent
+  | RfsInitDoneEvent
+  | RfsInitErrorEvent
+  | RfsCommandStartEvent
+  | RfsCommandDoneEvent
+  | RfsCommandErrorEvent
+  | RfsCustomEvent;
+```
+
+## Subscription Patterns
+
+### store.on()
+
+Subscribe to all events globally:
+
+```typescript
+const unsub = store.on((event) => {
+  console.log(event.type, event.kind, event.dataId);
+});
+```
+
+### space.on()
+
+For kinds with `onCommand`, subscribe to command-related events on a specific space:
+
+```typescript
+const space = await store.ensure(counterKind, {});
+
+const unsub = space.on('command:done', (e) => {
+  console.log('Command completed:', e.command, e.metadata);
+});
+```
+
+### space.onCustom()
+
+Listen only to custom events emitted via `emit()` inside `onCommand`:
+
+```typescript
+const unsub = space.onCustom<{ count: number }>((payload) => {
+  console.log('Custom event:', payload.count);
+});
+```
+
+### Ensure Options Callbacks
+
+Pass callbacks directly to `ensure()` for per-call lifecycle hooks:
+
+```typescript
+await store.ensure(kind, input, {
+  onStart: (ctx) => console.log('Init started:', ctx.dataId),
+  onCached: (ctx) => console.log('Cache hit:', ctx.path),
+  onDone: (ctx) => console.log('Init done:', ctx.exports),
+  onError: (ctx) => console.error('Init failed:', ctx.error),
+});
+```
+
+<Callout type="note">
+Custom events emitted via `emit()` during `onInit` can only be captured by `store.on()`, since the `RfsSpace` object has not yet been returned to the caller at that point.
+</Callout>
+
+## RfsUnsubscribe Type
+
+All subscription methods return an `RfsUnsubscribe` function — call it to stop receiving events:
+
+```typescript
+type RfsUnsubscribe = () => void;
+
+const unsub = store.on((event) => { /* ... */ });
+// Later:
+unsub();
+```
+
+## Code Example
+
+```typescript
+import { createStore, defineKind } from '@radium-fs/core';
+import { memoryAdapter } from '@radium-fs/memory';
+
+const greeter = defineKind<{ name: string }, { shout: boolean }>({
+  kind: 'greeter',
+  async onInit({ input, space, emit }) {
+    await space.writeFile('hello.txt', `Hello, ${input.name}!`);
+    emit({ greeting: input.name });
+    return { '.': '.' };
+  },
+  async onCommand({ command, space, emit }) {
+    if (command.shout) {
+      emit({ shouted: true });
+    }
+  },
+});
+
+const store = createStore({ root: '/demo', adapter: memoryAdapter() });
+
+store.on((event) => {
+  if (event.type === 'init:done') {
+    console.log('Space built:', event.path);
+  }
+  if (event.type === 'custom') {
+    console.log('Custom:', event.payload);
+  }
+});
+
+const space = await store.ensure(greeter, { name: 'World' });
+space.onCustom((p) => console.log('Custom from space:', p));
+await space.send({ shout: true });
+```
+
+## Next
+
+Set up radium-fs in Node.js with the [Node.js Setup](/docs/guides/node-setup) guide.

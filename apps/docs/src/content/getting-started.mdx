@@ -1,0 +1,62 @@
+import { DagDiagram } from '../components/DagDiagram';
+
+# Quick Start
+
+Get a space running in three steps.
+
+## 1. Define a Kind
+
+A **Kind** is a recipe that defines how a space is produced. Think of it like a Dockerfile — it describes what goes into the folder, but doesn't create the folder until you `ensure()` it.
+
+```typescript
+import { defineKind } from '@radium-fs/core';
+
+const Greeter = defineKind({
+  kind: 'greeter',
+  onInit: async ({ input, space }) => {
+    const text = `Hello, ${input.message}!`;
+    await space.writeFile('hello.txt', new TextEncoder().encode(text));
+    return { exports: { greeting: 'hello.txt' } };
+  },
+});
+```
+
+The `onInit` hook receives the `input` and a `space` object for writing files. The return value declares what the space **exports** — named paths that other spaces can depend on.
+
+## 2. Create a Space (Cache Miss)
+
+Call `store.ensure()` to get or create a space. On the first call, `onInit` runs and the space is built from scratch.
+
+```typescript
+import { createStore } from '@radium-fs/core';
+import { memoryAdapter } from '@radium-fs/memory';
+
+const store = createStore({
+  root: '/my-project/.radium-fs-data',
+  adapter: memoryAdapter(),
+});
+
+const space = await store.ensure(Greeter, { message: 'world' });
+// space.path → /my-project/.radium-fs-data/greeter/ab/abc123.../space
+```
+
+The `init:start` → `init:done` event sequence fires. The space now exists on disk with the files your `onInit` wrote.
+
+<DagDiagram preset="single-space" />
+
+## 3. Ensure Again (Cache Hit)
+
+Call `ensure()` again with the **same input**. Since the space already exists, `onInit` is skipped entirely.
+
+```typescript
+const same = await store.ensure(Greeter, { message: 'world' });
+// Instant — one `init:cached` event, zero computation
+```
+
+Same `kind + input` always resolves to the same space — this is content-addressing at work.
+
+## What's Next?
+
+- Learn about [Space & Kind](/docs/concepts/space-and-kind) in depth
+- See how spaces link to each other via [Dependencies](/docs/concepts/dependencies)
+- Explore the [Playground](/playground) for a free-form experience

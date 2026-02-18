@@ -1,0 +1,62 @@
+import { Callout } from '../../components/mdx';
+import { DagDiagram } from '../../components/DagDiagram';
+
+# Dependencies
+
+Spaces can depend on other spaces. When space A calls `space.dep('name', kind, input)` inside its `onInit`, radium-fs ensures the dependency space exists and creates a **symlink** from `A/name/` to the dependency's exports.
+
+## How dep() Works
+
+```typescript
+const app = defineKind<{ env: string }>({
+  kind: 'app',
+  async onInit({ input, space }) {
+    await space.dep('config', configKind, { env: input.env });
+    await space.dep('lib', libKind, { name: 'utils', version: '1.0.0' });
+
+    await space.writeFile('main.js', '...');
+  },
+});
+```
+
+Under the hood, `dep()`:
+
+1. Calls `store.ensure()` for the dependency — which itself may call `dep()`, forming a recursive DAG.
+2. Creates a symlink from `<space>/name` to the dependency space's exported directory.
+3. Records the dependency in the space's manifest.
+
+<Callout type="tip">
+Symlinks are near-instant and take zero disk space. Unlike copying, a dependency always points to the canonical location of the data — one source of truth.
+</Callout>
+
+## Full Build
+
+When you ensure `app` for the first time, its `onInit` fires and calls `dep()` for both `config` and `lib`. Each dependency is ensured first, building the graph bottom-up:
+
+<DagDiagram preset="dep-chain-full" />
+
+The event log shows the full build order: `config` and `lib` are initialized before `app` completes.
+
+## Partial Rebuild
+
+Change the `env` input from `"prod"` to `"dev"`. This changes `config`'s input (and therefore `app`'s), but `lib` is unchanged — it stays cached:
+
+<DagDiagram preset="dep-chain-partial" />
+
+This is the power of content-addressed dependency graphs — only what changed gets rebuilt.
+
+## Dependency Graph
+
+radium-fs naturally forms a **directed acyclic graph** (DAG). Each space knows its dependencies via the manifest, and symlinks make the graph physically visible:
+
+```
+app/
+├── config/  → symlink → /<root>/config_<hash>/
+├── lib/     → symlink → /<root>/lib_<hash>/
+├── main.js
+└── .radium-fs-manifest.json
+```
+
+## Next
+
+Learn how [Caching](/docs/concepts/caching) works at a deeper level.

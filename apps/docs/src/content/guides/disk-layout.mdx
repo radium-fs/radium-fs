@@ -1,0 +1,117 @@
+import { Callout } from '../../components/mdx';
+
+# Disk Layout
+
+This guide explains how radium-fs organizes data on disk when using a real filesystem adapter (e.g. `@radium-fs/node`).
+
+## Root Directory Structure
+
+The store root (passed to `createStore({ root })`) contains a single data directory:
+
+```
+{root}/
+└── .radium-fs-data/
+    └── {kind}/
+        └── {shard}/
+            ├── {dataId}/
+            ├── {dataId}/
+            └── .tmp-{dataId}-{random}/   ← temp during build
+```
+
+- **kind** — Space type (from `defineKind({ kind })`)
+- **shard** — First two characters of `dataId` (distributes storage)
+- **dataId** — SHA-256 hash of `kind + "\0" + canonicalStringify(input)`
+
+## Per-Space Structure
+
+Each space is a directory with this layout:
+
+```
+{dataId}/
+├── .radium-fs-manifest.json      ← Metadata
+├── space/                         ← Public content (onInit/onCommand write here)
+│   ├── src/
+│   ├── dist/
+│   ├── lib-a → <symlink to dependency>
+│   └── ...
+├── local/                         ← Private storage (space.local)
+│   └── ...
+└── .radium-fs-local-deps/         ← Local-scope child dependencies
+    └── {child-kind}/{shard}/{childDataId}/
+        ├── .radium-fs-manifest.json
+        ├── space/
+        ├── local/
+        └── .radium-fs-local-deps/
+```
+
+## Manifest Format
+
+`.radium-fs-manifest.json` contains the space lifecycle metadata:
+
+```json
+{
+  "version": 1,
+  "origin": {
+    "kind": "greeter",
+    "input": { "name": "World" }
+  },
+  "exports": { ".": "." },
+  "dependencies": [
+    {
+      "mountPath": "lib",
+      "origin": { "kind": "lib", "input": { "name": "utils" } },
+      "scope": "shared",
+      "export": "."
+    }
+  ],
+  "commands": [],
+  "metadata": {},
+  "createdAt": "2025-02-18T12:00:00.000Z",
+  "updatedAt": "2025-02-18T12:00:00.000Z"
+}
+```
+
+| Field | Description |
+|-------|-------------|
+| `version` | Protocol version (always 1) |
+| `origin` | Kind and input used to produce the space |
+| `exports` | Mapping of export names to paths (relative to `space/`) |
+| `dependencies` | Mounted dependencies (symlinks in `space/`) |
+| `commands` | Command history for spaces with `onCommand` |
+| `metadata` | User-defined metadata from `onInit` / `onCommand` |
+
+## Symlink Structure for Dependencies
+
+Dependencies are mounted as symlinks inside `space/`:
+
+```
+space/
+├── lib-a → ../../lib/ab/cd1234.../space/    ← shared dependency
+├── vendor/
+│   └── lib-b → ../../../lib/ef/5678.../space/
+└── ...
+```
+
+- **Shared** dependencies live in `{root}/.radium-fs-data/{kind}/{shard}/{dataId}/`
+- **Local** dependencies live in `{parent}/.radium-fs-local-deps/{kind}/{shard}/{dataId}/`
+
+## Temp Directory During Build
+
+On cache miss, radium-fs builds in a temporary directory, then atomically renames it:
+
+```
+.radium-fs-data/{kind}/{shard}/.tmp-{dataId}-{random}/
+├── .radium-fs-manifest.json
+├── space/
+└── local/
+```
+
+After `onInit` completes, the temp dir is `rename()`d to the final `{dataId}/` path. This ensures no half-built spaces exist on disk.
+
+<Callout type="tip">
+The atomic rename pattern means a crashed or aborted build leaves no corrupted space — only an orphaned `.tmp-*` directory that can be cleaned up.
+</Callout>
+
+## Next
+
+You've completed the guides. Explore the [API Reference](/docs/api/define-kind) for complete type definitions, or return to the [Introduction](/docs) to explore other topics.

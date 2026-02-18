@@ -1,0 +1,97 @@
+import { ApiSignature, PropsTable, Callout } from '../../components/mdx';
+
+# RfsSpace
+
+The **Space** is the object returned by `store.ensure()`. It represents a ready-to-use space instance with metadata, exports, and (for kinds with `onCommand`) command methods.
+
+## RfsSpaceBase
+
+Base properties present on all spaces:
+
+<PropsTable items={[
+  { name: 'dataId', type: 'string', desc: 'Deterministic unique identifier (computed from kind + cacheKey/input)', required: true },
+  { name: 'kind', type: 'string', desc: 'Kind identifier', required: true },
+  { name: 'origin', type: 'RfsOrigin', desc: 'Origin information (kind, dataId, input)', required: true },
+  { name: 'path', type: 'string', desc: 'Absolute path to the space directory', required: true },
+  { name: 'exports', type: 'Record<string, string>', desc: 'Exports mapping (absolute paths)', required: true },
+  { name: 'manifest', type: 'RfsManifest', desc: 'Read-only manifest snapshot', required: true },
+]} />
+
+## RfsSpaceWithCommands
+
+When the Kind has an `onCommand` hook, the space also includes:
+
+| Method | Description |
+|--------|-------------|
+| `send(command)` | Send a command; returns updated exports and metadata |
+| `on(event, handler)` | Listen to command-related events |
+| `onCustom(handler)` | Listen to custom events emitted via `emit()` in onCommand |
+
+## RfsSpace Conditional Type
+
+<ApiSignature>{`type RfsSpace<TCommand> =
+  [TCommand] extends [never]
+    ? RfsSpaceBase
+    : RfsSpaceBase & RfsSpaceWithCommands<TCommand>`}</ApiSignature>
+
+- **No onCommand** (`TCommand = never`): base properties only
+- **Has onCommand**: base properties + `send()`, `on()`, `onCustom()`
+
+## RfsSpaceApi
+
+The `space` parameter in `onInit`:
+
+<PropsTable items={[
+  { name: 'path', type: 'string', desc: 'Absolute path to the space directory', required: true },
+  { name: 'runtime', type: 'TRuntime', desc: 'Runtime context (merged from store + extraRuntime)', required: true },
+  { name: 'local', type: 'RfsLocalApi', desc: 'Private storage (physically isolated local/ directory)', required: true },
+  { name: 'writeFile', type: '(path, content) => Promise<void>', desc: 'Write a file', required: true },
+  { name: 'readFile', type: '(path, options?) => Promise<string>', desc: 'Read a file as string', required: true },
+  { name: 'mkdir', type: '(path) => Promise<void>', desc: 'Create a directory', required: true },
+  { name: 'readDir', type: '(path, options?) => Promise<string[]>', desc: 'List directory entries', required: true },
+  { name: 'stat', type: '(path) => Promise<RfsStatResult>', desc: 'Get file/directory metadata', required: true },
+  { name: 'copy', type: '(src, dest) => Promise<void>', desc: 'Copy a file or directory', required: true },
+  { name: 'move', type: '(src, dest) => Promise<void>', desc: 'Move a file or directory', required: true },
+  { name: 'remove', type: '(path, options?) => Promise<void>', desc: 'Remove a file or directory', required: true },
+  { name: 'glob', type: '(pattern, options?) => Promise<string[]>', desc: 'Find files matching a glob pattern', required: true },
+  { name: 'grep', type: '(pattern, options?) => Promise<string[]>', desc: 'Search file contents for a pattern', required: true },
+  { name: 'dep', type: '(mountPath, kind, input, options?) => Promise<string>', desc: 'Mount a dependency at space/{mountPath}', required: true },
+]} />
+
+## RfsCommandSpaceApi
+
+The `space` parameter in `onCommand`. Same as `RfsSpaceApi` but **without** `dep()` — dependencies can only be mounted during `onInit`.
+
+## RfsLocalApi
+
+Private storage API. Physically isolated in the `local/` directory. Not visible to `readDir` or `glob` scans. Use for caches, counters, internal queues, etc.
+
+| Method | Description |
+|--------|-------------|
+| `path` | Absolute path to the local directory |
+| `writeFile(path, content)` | Write a file |
+| `readFile(path, options?)` | Read a file |
+| `mkdir(path)` | Create a directory |
+| `readDir(path, options?)` | List entries |
+| `stat(path)` | Get metadata |
+| `remove(path, options?)` | Remove a file or directory |
+
+## Example
+
+```typescript
+const space = await store.ensure(MyKind, { env: 'prod' });
+
+// Base properties
+console.log(space.dataId);
+console.log(space.path);
+console.log(space.exports['.']); // default export path
+
+// If Kind has onCommand:
+if ('send' in space) {
+  const { exports, metadata } = await space.send({ action: 'increment' });
+}
+```
+
+## Next
+
+Learn about the platform I/O layer in [RfsAdapter](/docs/api/rfs-adapter).

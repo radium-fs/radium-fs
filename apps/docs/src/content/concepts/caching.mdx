@@ -1,0 +1,46 @@
+import { Callout } from '../../components/mdx';
+import { DagDiagram } from '../../components/DagDiagram';
+
+# Caching
+
+radium-fs uses **content addressing** for caching. A space's identity — its `dataId` — is derived from `kind + input`, not from timestamps or file watchers. If the input hasn't changed, the space is guaranteed to be up-to-date.
+
+## How It Works
+
+1. `ensure(kind, input)` is called.
+2. The engine computes `dataId = SHA-256(kind.kind + canonicalStringify(input))`.
+3. If a directory with that `dataId` exists and has a valid manifest → **cache hit**.
+4. Otherwise → **cache miss**, `onInit` runs.
+
+This is the same strategy used by Nix, Docker layers, and content-addressable storage systems. No heuristics, no expiry, no invalidation logic.
+
+<Callout type="tip">
+A cached space is never "stale." If the input is the same, the output is by definition the same — because `onInit` is a pure function of its inputs.
+</Callout>
+
+## First Build
+
+Both `config` and `bundle` are built from scratch — cache miss on every node:
+
+<DagDiagram preset="caching-full-build" />
+
+## Partial Rebuild
+
+Change the `env` from `"prod"` to `"staging"`. The input changes, so `config` gets a new `dataId` and rebuilds. Since `bundle` depends on `config`, its input also changes and it rebuilds too:
+
+<DagDiagram preset="caching-partial" />
+
+If you had another space that didn't depend on `env`, it would remain cached.
+
+## When to Invalidate
+
+Since caching is purely input-based, you "invalidate" by changing the input:
+
+- **Different config** → new `dataId` → rebuild.
+- **Same config** → same `dataId` → cached.
+
+There is no manual cache-busting or TTL. If you need to force a rebuild, change the input (e.g., add a `version` or `seed` field).
+
+## Next
+
+Learn about [Commands](/docs/concepts/commands) — how spaces handle post-initialization mutations.

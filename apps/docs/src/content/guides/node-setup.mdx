@@ -1,0 +1,48 @@
+import { Callout, InstallBlock } from '../../components/mdx';
+
+# Node.js Setup
+
+This guide walks you through setting up radium-fs in a Node.js project using the `@radium-fs/node` adapter.
+
+## Prerequisites
+
+- **Node.js >= 22** — Required for built-in `fs.glob` support.
+
+## Installation
+
+<InstallBlock packages="@radium-fs/core @radium-fs/node" />
+
+## Basic Usage
+
+```typescript
+import { createStore, defineKind } from '@radium-fs/core';
+import { nodeAdapter } from '@radium-fs/node';
+
+const greeter = defineKind<{ name: string }>({
+  kind: 'greeter',
+  async onInit({ input, space }) {
+    await space.writeFile('hello.txt', `Hello, ${input.name}!`);
+    return { '.': '.' };
+  },
+});
+
+const store = createStore({
+  root: '/path/to/your/project',
+  adapter: nodeAdapter(),
+});
+
+const space = await store.ensure(greeter, { name: 'World' });
+console.log(space.path); // /path/to/your/project/.radium-fs-data/greeter/xx/...
+```
+
+<Callout type="note">
+`@radium-fs/node` is **ESM only**. Use `"type": "module"` in your `package.json` or use `.mjs` extensions.
+</Callout>
+
+<Callout type="tip">
+The Node adapter provides native `node:crypto` for hashing and `node:fs` for filesystem operations — no polyfills, full performance.
+</Callout>
+
+## Next
+
+Use the [Memory Adapter](/docs/guides/memory-adapter) for testing or browser environments.

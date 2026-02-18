@@ -1,3 +1,4 @@
+import { Link } from 'react-router';
 import type { Scenario } from '../engine/types';
 
 interface HeaderProps {
@@ -35,17 +36,30 @@ export function Header({
 }: HeaderProps) {
   return (
     <>
-      {/* Top bar: logo + title + mobile run + GitHub */}
+      {/* Top bar: logo + nav + mobile run + GitHub */}
       <header className="flex items-center gap-3 px-4 py-2.5 border-b border-border">
-        <img
-          src={`${import.meta.env.BASE_URL}radium-fs-logo.png`}
-          alt="radium-fs"
-          className="h-7 w-7"
-        />
-        <span className="font-semibold text-text-primary text-sm tracking-wide">
-          radium-fs{' '}
-          <span className="text-text-secondary font-normal">playground</span>
-        </span>
+        <Link to="/" className="flex items-center gap-2">
+          <img
+            src={`${import.meta.env.BASE_URL}radium-fs-logo.png`}
+            alt="radium-fs"
+            className="h-7 w-7"
+          />
+          <span className="font-semibold text-text-primary text-sm tracking-wide">
+            radium-fs
+          </span>
+        </Link>
+
+        <div className="hidden sm:flex items-center gap-3 ml-2">
+          <Link
+            to="/docs"
+            className="text-xs text-text-secondary hover:text-text-primary transition-colors font-medium"
+          >
+            Docs
+          </Link>
+          <span className="text-xs text-accent font-medium">
+            Playground
+          </span>
+        </div>
 
         <div className="flex-1" />
 

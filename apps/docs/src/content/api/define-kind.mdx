@@ -1,0 +1,116 @@
+import { ApiSignature, PropsTable, Callout } from '../../components/mdx';
+
+# defineKind()
+
+`defineKind()` creates a **Kind** — a recipe that describes how to build a space. A Kind defines the `kind` name, an `onInit` hook for initialization, and optionally an `onCommand` hook for handling commands.
+
+## Signature
+
+<ApiSignature>{`function defineKind<TInput, TCommand = never, TRuntime = Record<string, unknown>>(
+  def: RfsKindDef<TInput, TCommand, TRuntime>
+): RfsKind<TInput, TCommand, TRuntime>`}</ApiSignature>
+
+## RfsKindDef
+
+The argument to `defineKind()`:
+
+<PropsTable items={[
+  { name: 'kind', type: 'string', desc: 'Unique Kind identifier', required: true },
+  { name: 'cacheKey', type: '(input: TInput) => Record<string, unknown>', desc: 'Custom cache key derivation; omit to use full input', required: false },
+  { name: 'onInit', type: '(ctx: RfsOnInitContext) => Promise<RfsInitResult | void>', desc: 'Initialization hook — runs when the space is built', required: true },
+  { name: 'onCommand', type: '(ctx: RfsOnCommandContext) => Promise<RfsCommandResult>', desc: 'Command handler — enables space.send(); omit for read-only spaces', required: false },
+]} />
+
+## Return Value
+
+`defineKind()` returns a **frozen** `RfsKind` object with the same properties. This object is passed to `store.ensure()` as the first argument.
+
+## onInit Context
+
+The `onInit` hook receives a context object:
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `input` | `TInput` | The input passed to `store.ensure(kind, input)` |
+| `space` | `RfsSpaceApi` | File operations, `dep()`, `runtime`, `local` |
+| `signal` | `AbortSignal` | Abort signal for cancellation |
+| `emit` | `(payload: unknown) => void` | Emit custom events to `store.on()` subscribers |
+
+## onCommand Context
+
+The `onCommand` hook receives a context object:
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `command` | `TCommand` | The command sent via `space.send(command)` |
+| `current` | `{ exports, metadata }` | Current state from the last init/command |
+| `space` | `RfsCommandSpaceApi` | Same as `RfsSpaceApi` but **without** `dep()` |
+| `signal` | `AbortSignal` | Abort signal |
+| `emit` | `(payload: unknown) => void` | Emit custom events |
+
+<Callout type="note">
+`RfsCommandSpaceApi` does not include `dep()`. Dependencies can only be mounted during `onInit`.
+</Callout>
+
+## RfsInitResult
+
+Return value of `onInit`:
+
+<PropsTable items={[
+  { name: 'exports', type: 'string \| Record<string, string>', desc: "Exports mapping. String shorthand (e.g. 'dist') = { '.': 'dist' }. Omitted defaults to { '.': '.' }", required: false },
+  { name: 'metadata', type: 'Record<string, unknown>', desc: 'User-defined metadata stored in the manifest', required: false },
+]} />
+
+## Basic Usage
+
+```typescript
+import { defineKind } from '@radium-fs/core';
+
+const greeting = defineKind<{ name: string; lang: 'en' | 'zh' }>({
+  kind: 'greeting',
+  async onInit({ input, space }) {
+    const msg = input.lang === 'en' ? `Hello, ${input.name}!` : `你好，${input.name}！`;
+    await space.writeFile('message.txt', msg);
+  },
+});
+```
+
+## With Commands
+
+```typescript
+type CounterCommand = { action: 'inc' | 'dec' };
+
+const counter = defineKind<{ name: string }, CounterCommand>({
+  kind: 'counter',
+  async onInit({ input, space }) {
+    await space.writeFile('state.json', JSON.stringify({ count: 0 }));
+  },
+  async onCommand({ command, current, space }) {
+    const state = JSON.parse(await space.readFile('state.json'));
+    state.count += command.action === 'inc' ? 1 : -1;
+    await space.writeFile('state.json', JSON.stringify(state));
+  },
+});
+```
+
+## cacheKey Tips
+
+<Callout type="tip">
+Use `cacheKey` when some input fields do not affect the output. For example, a `debug` flag used only for logging should be excluded so that `{ env: 'prod', debug: true }` and `{ env: 'prod', debug: false }` share the same cached space.
+</Callout>
+
+```typescript
+const bundle = defineKind<{ env: string; debug: boolean }>({
+  kind: 'bundle',
+  cacheKey: (input) => ({ env: input.env }), // ignore debug
+  async onInit({ input, space }) {
+    const outDir = input.env === 'prod' ? 'dist' : 'dist-dev';
+    await space.writeFile('out/index.js', '/* built */');
+    return { exports: outDir };
+  },
+});
+```
+
+## Next
+
+Learn how to create a store and call `ensure()` in [createStore()](/docs/api/create-store).

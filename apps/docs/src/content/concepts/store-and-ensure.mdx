@@ -1,0 +1,72 @@
+import { Callout } from '../../components/mdx';
+import { DagDiagram } from '../../components/DagDiagram';
+
+# Store & ensure()
+
+The **Store** is the central API in radium-fs. It manages the lifecycle of all spaces — creation, caching, dependency resolution, and event dispatch.
+
+## Creating a Store
+
+```typescript
+import { createStore } from '@radium-fs/core';
+import { memoryAdapter } from '@radium-fs/memory';
+
+const store = createStore({
+  root: '/my-project/.radium-fs-data',
+  adapter: memoryAdapter(),
+});
+```
+
+The `root` is the directory where all managed spaces live. The `adapter` provides platform-specific filesystem operations.
+
+## The ensure() Method
+
+`store.ensure()` is the only way to create or access a space:
+
+```typescript
+const space = await store.ensure(Greeter, { message: 'hello' });
+```
+
+It always returns a valid space. Internally, it:
+
+1. Computes the **dataId** from `kind + input`.
+2. Checks if a space with that dataId already exists.
+3. If **yes** → returns immediately (cache hit). Emits `init:cached`.
+4. If **no** → calls `onInit`, writes the manifest, emits `init:start` → `init:done`.
+
+<Callout type="note">
+`ensure()` is idempotent. Calling it multiple times with the same arguments is safe and cheap — the second call is always a cache hit.
+</Callout>
+
+## Cache Miss vs Cache Hit
+
+The first call triggers `init:start` → `init:done` — the space is built from scratch:
+
+<DagDiagram preset="single-space" />
+
+The second call with the same input emits only `init:cached` — zero computation:
+
+<DagDiagram preset="single-space-cached" />
+
+## Events
+
+Every store emits events for observability:
+
+| Event | When |
+|-------|------|
+| `init:start` | `onInit` begins for a new space |
+| `init:done` | `onInit` completed successfully |
+| `init:cached` | Space already existed, skipped init |
+| `init:error` | `onInit` threw an error |
+
+Subscribe with `store.on()`:
+
+```typescript
+const unsub = store.on((event) => {
+  console.log(event.type, event.kind, event.dataId);
+});
+```
+
+## Next
+
+Learn how spaces connect to each other in [Dependencies](/docs/concepts/dependencies).

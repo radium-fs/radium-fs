@@ -1,0 +1,75 @@
+import { Callout, InstallBlock } from '../../components/mdx';
+
+# Memory Adapter
+
+The `@radium-fs/memory` adapter provides an in-memory filesystem implementation. Use it when you need radium-fs without touching the real filesystem.
+
+## When to Use
+
+- **Testing** — Unit tests with no disk I/O, fast and isolated
+- **Browser** — Run radium-fs in the browser (no Node.js APIs)
+- **Quick prototyping** — Experiment without creating real directories
+
+## Installation
+
+<InstallBlock packages="@radium-fs/core @radium-fs/memory" />
+
+## Basic Usage
+
+```typescript
+import { createStore, defineKind } from '@radium-fs/core';
+import { memoryAdapter } from '@radium-fs/memory';
+
+const greeter = defineKind<{ name: string }>({
+  kind: 'greeter',
+  async onInit({ input, space }) {
+    await space.writeFile('hello.txt', `Hello, ${input.name}!`);
+    return { '.': '.' };
+  },
+});
+
+const store = createStore({
+  root: '/virtual',
+  adapter: memoryAdapter(),
+});
+
+const space = await store.ensure(greeter, { name: 'World' });
+const content = await space.readFile('hello.txt');
+console.log(new TextDecoder().decode(content)); // Hello, World!
+```
+
+<Callout type="note">
+Data lives entirely in memory. It is lost on page refresh or process exit. Do not use for persistent storage.
+</Callout>
+
+## Testing Patterns
+
+Each test can use a fresh adapter instance for isolation:
+
+```typescript
+import { createStore, defineKind } from '@radium-fs/core';
+import { memoryAdapter } from '@radium-fs/memory';
+
+test('greeter produces correct output', async () => {
+  const store = createStore({
+    root: '/test',
+    adapter: memoryAdapter(),
+  });
+
+  const greeter = defineKind<{ name: string }>({
+    kind: 'greeter',
+    async onInit({ input, space }) {
+      await space.writeFile('out.txt', input.name);
+      return { '.': '.' };
+    },
+  });
+
+  const space = await store.ensure(greeter, { name: 'Alice' });
+  const bytes = await space.readFile('out.txt');
+  expect(new TextDecoder().decode(bytes)).toBe('Alice');
+});
+```
+
+## Next
+
+Understand how data is stored on disk with the [Disk Layout](/docs/guides/disk-layout) guide.

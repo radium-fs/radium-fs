@@ -1,0 +1,89 @@
+import { ApiSignature, PropsTable, Callout } from '../../components/mdx';
+
+# createStore()
+
+`createStore()` creates the central radium-fs entry point. It manages the root directory, space lifecycle, caching, and event dispatch.
+
+## Signature
+
+<ApiSignature>{`function createStore(options: RfsStoreOptions): RfsStore`}</ApiSignature>
+
+## RfsStoreOptions
+
+<PropsTable items={[
+  { name: 'root', type: 'string', desc: 'Data root directory; .radium-fs-data/ is created under this path', required: true },
+  { name: 'adapter', type: 'RfsAdapter', desc: 'Platform-specific I/O layer (filesystem + crypto)', required: true },
+  { name: 'runtime', type: 'Record<string, unknown>', desc: 'Global runtime context passed to all spaces via space.runtime', required: false },
+  { name: 'locker', type: 'RfsLocker', desc: 'Optional distributed lock provider for multi-process safety', required: false },
+]} />
+
+## RfsStore Methods
+
+| Method | Description |
+|--------|-------------|
+| `ensure(kind, input, options?)` | Get or create a space; returns existing on cache hit, runs onInit on miss |
+| `on(handler)` | Subscribe to lifecycle events (init, command, custom) |
+| `find(origin)` | Find an existing space by origin |
+| `has(origin)` | Check whether a space exists |
+| `remove(origin)` | Remove a space and its local-scope child dependencies |
+| `list(kind?)` | List all spaces, optionally filtered by kind |
+
+## ensure()
+
+<ApiSignature>{`ensure<TInput, TCommand, TRuntime>(
+  kind: RfsKind<TInput, TCommand, TRuntime>,
+  input: TInput,
+  options?: RfsEnsureOptions
+): Promise<RfsSpace<TCommand>>`}</ApiSignature>
+
+### RfsEnsureOptions
+
+<PropsTable items={[
+  { name: 'signal', type: 'AbortSignal', desc: 'Abort signal to cancel the ensure operation', required: false },
+  { name: 'cache', type: 'boolean', desc: 'Use cache; true (default) returns immediately if space exists, false forces re-execution of onInit', required: false },
+  { name: 'onStart', type: '(ctx) => void', desc: 'Called when init begins (cache miss)', required: false },
+  { name: 'onCached', type: '(ctx) => void', desc: 'Called on cache hit', required: false },
+  { name: 'onDone', type: '(ctx) => void', desc: 'Called when init completes successfully', required: false },
+  { name: 'onError', type: '(ctx) => void', desc: 'Called when init fails (the Promise also rejects)', required: false },
+]} />
+
+## Basic Usage
+
+```typescript
+import { createStore } from '@radium-fs/core';
+import { memoryAdapter } from '@radium-fs/memory';
+
+const store = createStore({
+  root: '/my-project',
+  adapter: memoryAdapter(),
+});
+
+const space = await store.ensure(MyKind, { env: 'prod' });
+console.log(space.path); // absolute path to the space directory
+```
+
+## With Callbacks
+
+```typescript
+const space = await store.ensure(MyKind, input, {
+  onStart: ({ kind, dataId }) => console.log('Building', kind, dataId),
+  onCached: ({ kind, dataId }) => console.log('Cache hit', kind, dataId),
+  onDone: ({ kind, dataId }) => console.log('Done', kind, dataId),
+});
+```
+
+## With Abort
+
+```typescript
+const controller = new AbortController();
+const promise = store.ensure(MyKind, input, { signal: controller.signal });
+controller.abort(); // cancels the build
+```
+
+<Callout type="note">
+`ensure()` is idempotent. Calling it multiple times with the same `kind` and `input` is safe — subsequent calls return immediately from cache.
+</Callout>
+
+## Next
+
+Learn about the space object returned by `ensure()` in [RfsSpace](/docs/api/rfs-space).
