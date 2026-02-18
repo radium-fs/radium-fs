@@ -5,7 +5,11 @@
 <h1 align="center">radium-fs</h1>
 
 <p align="center">
-  A filesystem-level DAG caching engine for building interconnected spaces.
+  <a href="./README.md">English</a> · <a href="./README.zh-CN.md">简体中文</a>
+</p>
+
+<p align="center">
+  A filesystem-level context composition engine for multi-agent systems.
 </p>
 
 <p align="center">
@@ -17,6 +21,8 @@
 radium-fs manages a persistent pool of filesystem spaces. Each space is a real folder with a deterministic identity — same recipe, same input, same result. Spaces link to each other via symlinks, forming a dependency graph where nothing is duplicated and everything can be rebuilt.
 
 **Why it matters:** Complex multi-agent systems need to share, compose, and reuse filesystem artifacts at scale. radium-fs gives them a shared infrastructure layer where spaces are created once, cached forever, linked instantly, and rebuilt on demand.
+
+Documentation: [English Docs](https://radium-fs.github.io/radium-fs/docs) · [中文文档](https://radium-fs.github.io/radium-fs/zh/docs)
 
 ### Key Properties
 

@@ -1,0 +1,72 @@
+import { Callout } from '../../components/mdx';
+import { DagDiagram } from '../../components/DagDiagram';
+
+# Store 与 ensure()
+
+**Store** 是 radium-fs 的中心 API。它负责所有 space 的生命周期：创建、缓存、依赖解析和事件分发。
+
+## 创建 Store
+
+```typescript
+import { createStore } from '@radium-fs/core';
+import { memoryAdapter } from '@radium-fs/memory';
+
+const store = createStore({
+  root: '/my-project/.radium-fs-data',
+  adapter: memoryAdapter(),
+});
+```
+
+`root` 是所有受管 space 的根目录。`adapter` 提供平台相关的文件系统操作能力。
+
+## ensure() 方法
+
+`store.ensure()` 是创建或访问 space 的唯一入口：
+
+```typescript
+const space = await store.ensure(Greeter, { message: 'hello' });
+```
+
+它始终返回一个有效 space。内部流程如下：
+
+1. 根据 `kind + input` 计算 **dataId**。
+2. 检查该 `dataId` 对应的 space 是否已存在。
+3. 若**存在**：立即返回（缓存命中），触发 `init:cached`。
+4. 若**不存在**：执行 `onInit`、写入 manifest，触发 `init:start` → `init:done`。
+
+<Callout type="note">
+`ensure()` 是幂等操作。用相同参数重复调用既安全又便宜，第二次调用总是缓存命中。
+</Callout>
+
+## 缓存未命中 vs 缓存命中
+
+首次调用触发 `init:start` → `init:done`，space 从零构建：
+
+<DagDiagram preset="single-space" />
+
+第二次使用相同输入调用只会触发 `init:cached`，几乎零计算：
+
+<DagDiagram preset="single-space-cached" />
+
+## 事件
+
+每个 store 都会发出可观测事件：
+
+| 事件 | 触发时机 |
+|-------|------|
+| `init:start` | 新 space 的 `onInit` 开始 |
+| `init:done` | `onInit` 成功结束 |
+| `init:cached` | space 已存在，跳过初始化 |
+| `init:error` | `onInit` 抛出错误 |
+
+使用 `store.on()` 订阅：
+
+```typescript
+const unsub = store.on((event) => {
+  console.log(event.type, event.kind, event.dataId);
+});
+```
+
+## 下一步
+
+继续阅读 [依赖关系](/zh/docs/concepts/dependencies)，了解多个 space 如何连接成图。

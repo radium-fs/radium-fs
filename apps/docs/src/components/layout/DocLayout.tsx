@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, type ReactNode } from 'react';
-import { Link } from 'react-router';
+import { Link, useLocation } from 'react-router';
 import { Sidebar } from './Sidebar';
 import { TableOfContents } from './TableOfContents';
 import { PageNav } from './PageNav';
@@ -7,10 +7,41 @@ import { MobileNav } from './MobileNav';
 import { SearchModal } from './SearchModal';
 import { MdxProvider } from '../mdx/Provider';
 import { ThemeToggle } from '../ThemeToggle';
+import { switchPathLocale, type Locale } from '../../lib/locale';
 
-export function DocLayout({ children }: { children: ReactNode }) {
+interface DocLayoutProps {
+  children: ReactNode;
+  locale: Locale;
+}
+
+const uiCopy: Record<Locale, {
+  docs: string;
+  playground: string;
+  search: string;
+  toggleNav: string;
+}> = {
+  en: {
+    docs: 'Docs',
+    playground: 'Playground',
+    search: 'Search docs...',
+    toggleNav: 'Toggle navigation',
+  },
+  zh: {
+    docs: '文档',
+    playground: 'Playground',
+    search: '搜索文档...',
+    toggleNav: '切换导航',
+  },
+};
+
+export function DocLayout({ children, locale }: DocLayoutProps) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const { pathname } = useLocation();
+  const copy = uiCopy[locale];
+  const homePath = locale === 'zh' ? '/zh' : '/';
+  const enPath = switchPathLocale(pathname, 'en');
+  const zhPath = switchPathLocale(pathname, 'zh');
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
@@ -38,14 +69,14 @@ export function DocLayout({ children }: { children: ReactNode }) {
         <button
           onClick={toggleNav}
           className="lg:hidden text-text-secondary hover:text-text-primary transition-colors"
-          title="Toggle navigation"
+          title={copy.toggleNav}
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M3 12h18M3 6h18M3 18h18" />
           </svg>
         </button>
 
-        <Link to="/" className="flex items-center gap-2">
+        <Link to={homePath} className="flex items-center gap-2">
           <img
             src={`${import.meta.env.BASE_URL}radium-fs-logo.png`}
             alt="radium-fs"
@@ -58,13 +89,13 @@ export function DocLayout({ children }: { children: ReactNode }) {
 
         <div className="hidden sm:flex items-center gap-3 ml-2">
           <span className="text-xs text-accent font-medium">
-            Docs
+            {copy.docs}
           </span>
           <Link
             to="/playground"
             className="text-xs text-text-secondary hover:text-text-primary transition-colors font-medium"
           >
-            Playground
+            {copy.playground}
           </Link>
         </div>
 
@@ -75,13 +106,29 @@ export function DocLayout({ children }: { children: ReactNode }) {
           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
-          Search...
+          {copy.search}
           <kbd className="text-[10px] bg-surface-raised px-1 py-0.5 rounded border border-border ml-2">
             ⌘K
           </kbd>
         </button>
 
         <div className="flex-1" />
+
+        <div className="flex items-center gap-1 text-xs text-text-secondary">
+          <Link
+            to={enPath}
+            className={`transition-colors ${locale === 'en' ? 'text-accent font-medium' : 'hover:text-text-primary'}`}
+          >
+            EN
+          </Link>
+          <span>/</span>
+          <Link
+            to={zhPath}
+            className={`transition-colors ${locale === 'zh' ? 'text-accent font-medium' : 'hover:text-text-primary'}`}
+          >
+            中文
+          </Link>
+        </div>
 
         <ThemeToggle />
 
@@ -102,7 +149,7 @@ export function DocLayout({ children }: { children: ReactNode }) {
       <div className="flex flex-1 min-h-0">
         {/* Desktop sidebar */}
         <aside className="hidden lg:block w-60 shrink-0 border-r border-border overflow-y-auto">
-          <Sidebar />
+          <Sidebar locale={locale} />
         </aside>
 
         {/* Content */}
@@ -113,18 +160,18 @@ export function DocLayout({ children }: { children: ReactNode }) {
                 {children}
               </MdxProvider>
             </article>
-            <PageNav />
+            <PageNav locale={locale} />
           </div>
         </main>
 
         {/* Desktop TOC */}
         <aside className="hidden xl:block w-52 shrink-0 border-l border-border overflow-y-auto">
-          <TableOfContents />
+          <TableOfContents locale={locale} />
         </aside>
       </div>
 
-      <MobileNav open={mobileNavOpen} onClose={closeNav} />
-      <SearchModal open={searchOpen} onClose={() => setSearchOpen(false)} />
+      <MobileNav locale={locale} open={mobileNavOpen} onClose={closeNav} />
+      <SearchModal locale={locale} open={searchOpen} onClose={() => setSearchOpen(false)} />
     </div>
   );
 }

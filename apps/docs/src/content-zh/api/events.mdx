@@ -1,0 +1,220 @@
+import { PropsTable, Callout } from '../../components/mdx';
+
+# 事件系统
+
+radium-fs 事件系统用于观测 space 生命周期、命令执行和自定义事件。事件可通过 store 级、space 级以及 ensure 调用级订阅获取。
+
+## 事件类型
+
+### Init 事件
+
+#### init:start
+
+初始化开始时触发（缓存未命中，准备执行 onInit）。
+
+<PropsTable items={[
+  { name: 'kind', type: 'string', desc: 'Kind 标识符' },
+  { name: 'dataId', type: 'string', desc: '确定性唯一标识' },
+  { name: 'input', type: 'unknown', desc: '传给 ensure() 的运行时输入' },
+]} />
+
+#### init:cached
+
+缓存命中时触发（跳过 onInit）。
+
+<PropsTable items={[
+  { name: 'kind', type: 'string', desc: 'Kind 标识符' },
+  { name: 'dataId', type: 'string', desc: '确定性唯一标识' },
+  { name: 'input', type: 'unknown', desc: '传给 ensure() 的运行时输入' },
+  { name: 'path', type: 'string', desc: '已存在 space 目录的绝对路径' },
+]} />
+
+#### init:done
+
+初始化成功完成时触发。
+
+<PropsTable items={[
+  { name: 'kind', type: 'string', desc: 'Kind 标识符' },
+  { name: 'dataId', type: 'string', desc: '确定性唯一标识' },
+  { name: 'input', type: 'unknown', desc: '传给 ensure() 的运行时输入' },
+  { name: 'path', type: 'string', desc: 'space 目录绝对路径' },
+  { name: 'exports', type: 'Record<string, string>', desc: 'exports 映射（绝对路径）' },
+  { name: 'metadata', type: 'Record<string, unknown>', desc: '来自 onInit 的用户元数据' },
+]} />
+
+#### init:error
+
+初始化失败时触发。
+
+<PropsTable items={[
+  { name: 'kind', type: 'string', desc: 'Kind 标识符' },
+  { name: 'dataId', type: 'string', desc: '确定性唯一标识' },
+  { name: 'input', type: 'unknown', desc: '传给 ensure() 的运行时输入' },
+  { name: 'error', type: 'Error', desc: '抛出的错误对象' },
+]} />
+
+### Command 事件
+
+#### command:start
+
+命令开始执行时触发。
+
+<PropsTable items={[
+  { name: 'kind', type: 'string', desc: 'Kind 标识符' },
+  { name: 'dataId', type: 'string', desc: '确定性唯一标识' },
+  { name: 'command', type: 'unknown', desc: '通过 space.send() 发送的命令对象' },
+]} />
+
+#### command:done
+
+命令执行完成时触发。
+
+<PropsTable items={[
+  { name: 'kind', type: 'string', desc: 'Kind 标识符' },
+  { name: 'dataId', type: 'string', desc: '确定性唯一标识' },
+  { name: 'command', type: 'unknown', desc: '通过 space.send() 发送的命令对象' },
+  { name: 'exports', type: 'Record<string, string>', desc: '更新后的 exports 映射' },
+  { name: 'metadata', type: 'Record<string, unknown>', desc: '来自 onCommand 的更新元数据' },
+]} />
+
+#### command:error
+
+命令执行失败时触发。
+
+<PropsTable items={[
+  { name: 'kind', type: 'string', desc: 'Kind 标识符' },
+  { name: 'dataId', type: 'string', desc: '确定性唯一标识' },
+  { name: 'command', type: 'unknown', desc: '通过 space.send() 发送的命令对象' },
+  { name: 'error', type: 'Error', desc: '抛出的错误对象' },
+]} />
+
+### 自定义事件
+
+#### custom
+
+在 onInit 或 onCommand 中通过 `emit()` 触发的自定义事件。
+
+<PropsTable items={[
+  { name: 'kind', type: 'string', desc: 'Kind 标识符' },
+  { name: 'dataId', type: 'string', desc: '确定性唯一标识' },
+  { name: 'payload', type: 'T', desc: '用户自定义负载' },
+]} />
+
+## RfsEvent Union Type
+
+所有事件都属于 `RfsEvent` 联合类型：
+
+```typescript
+type RfsEvent =
+  | RfsInitStartEvent
+  | RfsInitCachedEvent
+  | RfsInitDoneEvent
+  | RfsInitErrorEvent
+  | RfsCommandStartEvent
+  | RfsCommandDoneEvent
+  | RfsCommandErrorEvent
+  | RfsCustomEvent;
+```
+
+## 订阅方式
+
+### store.on()
+
+全局订阅所有事件：
+
+```typescript
+const unsub = store.on((event) => {
+  console.log(event.type, event.kind, event.dataId);
+});
+```
+
+### space.on()
+
+针对带 `onCommand` 的 Kind，可在特定 space 上订阅命令相关事件：
+
+```typescript
+const space = await store.ensure(counterKind, {});
+
+const unsub = space.on('command:done', (e) => {
+  console.log('Command completed:', e.command, e.metadata);
+});
+```
+
+### space.onCustom()
+
+只监听 `onCommand` 内通过 `emit()` 发出的自定义事件：
+
+```typescript
+const unsub = space.onCustom<{ count: number }>((payload) => {
+  console.log('Custom event:', payload.count);
+});
+```
+
+### ensure 选项回调
+
+将回调直接传给 `ensure()`，可为单次调用设置生命周期钩子：
+
+```typescript
+await store.ensure(kind, input, {
+  onStart: (ctx) => console.log('Init started:', ctx.dataId),
+  onCached: (ctx) => console.log('Cache hit:', ctx.path),
+  onDone: (ctx) => console.log('Init done:', ctx.exports),
+  onError: (ctx) => console.error('Init failed:', ctx.error),
+});
+```
+
+<Callout type="note">
+`onInit` 阶段通过 `emit()` 发出的自定义事件只能由 `store.on()` 捕获，因为此时 `RfsSpace` 尚未返回给调用方。
+</Callout>
+
+## RfsUnsubscribe Type
+
+所有订阅方法都返回一个 `RfsUnsubscribe` 函数，用于取消订阅：
+
+```typescript
+type RfsUnsubscribe = () => void;
+
+const unsub = store.on((event) => { /* ... */ });
+// 稍后取消订阅：
+unsub();
+```
+
+## 代码示例
+
+```typescript
+import { createStore, defineKind } from '@radium-fs/core';
+import { memoryAdapter } from '@radium-fs/memory';
+
+const greeter = defineKind<{ name: string }, { shout: boolean }>({
+  kind: 'greeter',
+  async onInit({ input, space, emit }) {
+    await space.writeFile('hello.txt', `Hello, ${input.name}!`);
+    emit({ greeting: input.name });
+    return { '.': '.' };
+  },
+  async onCommand({ command, space, emit }) {
+    if (command.shout) {
+      emit({ shouted: true });
+    }
+  },
+});
+
+const store = createStore({ root: '/demo', adapter: memoryAdapter() });
+
+store.on((event) => {
+  if (event.type === 'init:done') {
+    console.log('Space built:', event.path);
+  }
+  if (event.type === 'custom') {
+    console.log('Custom:', event.payload);
+  }
+});
+
+const space = await store.ensure(greeter, { name: 'World' });
+space.onCustom((p) => console.log('Custom from space:', p));
+await space.send({ shout: true });
+```
+
+## 下一步
+
+继续阅读 [Node.js 配置](/zh/docs/guides/node-setup)，在 Node 环境中接入 radium-fs。

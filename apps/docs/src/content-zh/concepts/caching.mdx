@@ -1,0 +1,46 @@
+import { Callout } from '../../components/mdx';
+import { DagDiagram } from '../../components/DagDiagram';
+
+# 缓存机制
+
+radium-fs 使用**内容寻址**进行缓存。space 的身份（`dataId`）由 `kind + input` 推导，而不是依赖时间戳或文件监听。只要 input 不变，space 就一定是最新状态。
+
+## 工作原理
+
+1. 调用 `ensure(kind, input)`。
+2. 引擎计算 `dataId = SHA-256(kind.kind + canonicalStringify(input))`。
+3. 如果该 `dataId` 对应目录已存在且 manifest 有效，则**缓存命中**。
+4. 否则为**缓存未命中**，执行 `onInit`。
+
+这与 Nix、Docker layer 以及内容寻址存储系统的策略一致：无启发式、无过期时间、无手动失效逻辑。
+
+<Callout type="tip">
+缓存命中的 space 不会“过期”。因为 `onInit` 可视为输入到输出的纯函数，输入相同则输出按定义相同。
+</Callout>
+
+## 首次构建
+
+`config` 和 `bundle` 都会从零构建，所有节点均为缓存未命中：
+
+<DagDiagram preset="caching-full-build" />
+
+## 局部重建
+
+将 `env` 从 `"prod"` 改为 `"staging"` 后，`config` input 改变，会生成新 `dataId` 并重建。由于 `bundle` 依赖 `config`，其 input 也随之变化，因此也会重建：
+
+<DagDiagram preset="caching-partial" />
+
+若存在不依赖 `env` 的其他 space，它会继续保持缓存命中。
+
+## 何时需要重建
+
+由于缓存完全由 input 决定，修改 input 就会触发重建：
+
+- **配置不同** → 新 `dataId` → 重建。
+- **配置相同** → 同一 `dataId` → 命中缓存。
+
+系统不需要手动 cache-busting 或 TTL。如果需要强制重建，请显式修改 input（例如增加 `version` 或 `seed` 字段）。
+
+## 下一步
+
+继续阅读 [命令系统](/zh/docs/concepts/commands)，了解 space 在初始化后如何进行状态变更。

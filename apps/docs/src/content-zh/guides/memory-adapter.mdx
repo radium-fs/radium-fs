@@ -1,0 +1,75 @@
+import { Callout, InstallBlock } from '../../components/mdx';
+
+# 内存适配器
+
+`@radium-fs/memory` 提供内存文件系统实现。适用于希望使用 radium-fs 但不触碰真实磁盘的场景。
+
+## 适用场景
+
+- **测试**：无磁盘 I/O 的单元测试，速度快且相互隔离
+- **浏览器**：在浏览器中运行 radium-fs（不依赖 Node.js API）
+- **快速原型**：无需创建真实目录即可验证思路
+
+## 安装
+
+<InstallBlock packages="@radium-fs/core @radium-fs/memory" />
+
+## 基础用法
+
+```typescript
+import { createStore, defineKind } from '@radium-fs/core';
+import { memoryAdapter } from '@radium-fs/memory';
+
+const greeter = defineKind<{ name: string }>({
+  kind: 'greeter',
+  async onInit({ input, space }) {
+    await space.writeFile('hello.txt', `Hello, ${input.name}!`);
+    return { '.': '.' };
+  },
+});
+
+const store = createStore({
+  root: '/virtual',
+  adapter: memoryAdapter(),
+});
+
+const space = await store.ensure(greeter, { name: 'World' });
+const content = await space.readFile('hello.txt');
+console.log(new TextDecoder().decode(content)); // Hello, World!
+```
+
+<Callout type="note">
+数据完全驻留内存。页面刷新或进程退出后会丢失，不适合持久化存储。
+</Callout>
+
+## 测试模式
+
+每个测试都可以创建新的 adapter 实例以实现隔离：
+
+```typescript
+import { createStore, defineKind } from '@radium-fs/core';
+import { memoryAdapter } from '@radium-fs/memory';
+
+test('greeter produces correct output', async () => {
+  const store = createStore({
+    root: '/test',
+    adapter: memoryAdapter(),
+  });
+
+  const greeter = defineKind<{ name: string }>({
+    kind: 'greeter',
+    async onInit({ input, space }) {
+      await space.writeFile('out.txt', input.name);
+      return { '.': '.' };
+    },
+  });
+
+  const space = await store.ensure(greeter, { name: 'Alice' });
+  const bytes = await space.readFile('out.txt');
+  expect(new TextDecoder().decode(bytes)).toBe('Alice');
+});
+```
+
+## 下一步
+
+继续阅读 [磁盘布局](/zh/docs/guides/disk-layout)，了解真实文件系统下的数据组织方式。

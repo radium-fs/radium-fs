@@ -1,0 +1,110 @@
+import { Callout } from '../../components/mdx';
+import { DagDiagram } from '../../components/DagDiagram';
+
+# 依赖关系
+
+Space 可以依赖其他 space。当 space A 在 `onInit` 中调用 `space.dep('name', kind, input)` 时，radium-fs 会确保依赖存在，并在 `A/name/` 处创建指向依赖 exports 的**符号链接**。
+
+在多 agent 场景下，这就是“每个 agent 只挂载所需上下文”的实现方式。
+
+## dep() 与 input hash 的分工
+
+- `dep()` 定义依赖边：谁挂载了哪些上下文。
+- `kind + input` 决定 `dataId`：`ensure()` 是复用还是重建。
+
+只有 input 变化的 space 才会重建。当变化只影响某一条依赖路径时，无关路径仍可复用。
+
+## dep() 的工作方式
+
+```typescript
+const app = defineKind<{ env: string }>({
+  kind: 'app',
+  async onInit({ input, space }) {
+    await space.dep('config', configKind, { env: input.env });
+    await space.dep('lib', libKind, { name: 'utils', version: '1.0.0' });
+
+    await space.writeFile('main.js', '...');
+  },
+});
+```
+
+`dep()` 在底层会做三件事：
+
+1. 对依赖调用 `store.ensure()`，而依赖本身也可能继续调用 `dep()`，形成递归 DAG。
+2. 从 `<space>/name` 创建符号链接到依赖 space 的导出目录。
+3. 在当前 space 的 manifest 中记录依赖信息。
+
+<Callout type="tip">
+符号链接几乎瞬时完成且不占额外磁盘空间。与复制不同，依赖始终指向数据的唯一来源（single source of truth）。
+</Callout>
+
+## 多 agent 上下文组合
+
+```typescript
+const planner = defineKind({
+  kind: 'planner',
+  async onInit({ input, space }) {
+    await space.dep('repo', repoContext, { repo: input.repo });
+    await space.dep('task', taskContext, { task: input.task });
+  },
+});
+
+const coder = defineKind({
+  kind: 'coder',
+  async onInit({ input, space }) {
+    await space.dep('repo', repoContext, { repo: input.repo });
+    await space.dep('task', taskContext, { task: input.task });
+    await space.dep('tools', toolsContext, { stack: input.stack });
+  },
+});
+
+const tester = defineKind({
+  kind: 'tester',
+  async onInit({ input, space }) {
+    await space.dep('repo', repoContext, { repo: input.repo });
+    await space.dep('tools', toolsContext, { stack: input.stack });
+  },
+});
+```
+
+`task` 更新示例（`auth-v1 -> auth-v2`）：
+
+| Space | 依赖集合 | 结果 |
+|---|---|---|
+| `planner` | `repo + task` | 重建 |
+| `coder` | `repo + task + tools` | 重建 |
+| `tester` | `repo + tools` | 命中缓存 |
+
+这就是核心模式：**用 dep 集合做选择性挂载，用 input 变化触发选择性重建**。
+
+## 全量构建
+
+首次 ensure `app` 时，会触发 `onInit` 并对 `config` 与 `lib` 调用 `dep()`。每个依赖会先被 ensure，整体按自底向上顺序构建：
+
+<DagDiagram preset="dep-chain-full" />
+
+事件日志中可以看到完整构建顺序：`config` 和 `lib` 先初始化，随后 `app` 完成。
+
+## 局部重建
+
+将 `env` 从 `"prod"` 改为 `"dev"`。这会改变 `config` 的 input（进而影响 `app` 的 input 路径），但 `lib` input 不变，因此仍保持缓存命中：
+
+<DagDiagram preset="dep-chain-partial" />
+
+这就是依赖驱动上下文组合的价值：只构建受影响路径，其他路径全部复用。
+
+## 依赖图
+
+radium-fs 天然形成 **有向无环图**（DAG）。每个 space 都通过 manifest 记录依赖，符号链接让依赖图在文件系统中可视化：
+
+```
+app/
+├── config/  → symlink → /<root>/config_<hash>/
+├── lib/     → symlink → /<root>/lib_<hash>/
+├── main.js
+└── .radium-fs-manifest.json
+```
+
+## 下一步
+
+继续阅读 [缓存机制](/zh/docs/concepts/caching)，理解 `kind + input` 如何映射到 `dataId` 并决定命中。

@@ -1,0 +1,93 @@
+import { ApiSignature, PropsTable, Callout } from '../../components/mdx';
+
+# RfsAdapter
+
+**RfsAdapter** 是平台相关 I/O 层。它抽象了文件系统操作与加密哈希，使 radium-fs 核心保持运行时无关。实现该接口即可支持不同平台（Node.js、memfs、Deno、浏览器 OPFS 等）。
+
+## 作用概览
+
+- **文件系统操作**：read、write、mkdir、stat、remove、rename、symlink、glob、grep
+- **加密哈希**：SHA-256，用于生成确定性 dataId
+- **平台实现差异**：Node、浏览器、Deno 各自提供 adapter 实现
+
+## 接口方法
+
+<PropsTable items={[
+  { name: 'hash', type: '(data: Uint8Array) => Promise<string>', desc: '计算 SHA-256；必须返回小写十六进制（64 字符）', required: true },
+  { name: 'readFile', type: '(path: string) => Promise<Uint8Array>', desc: '按原始字节读取文件', required: true },
+  { name: 'writeFile', type: '(path: string, content: string | Uint8Array) => Promise<void>', desc: '写文件；必要时自动创建父目录', required: true },
+  { name: 'mkdir', type: '(path: string) => Promise<void>', desc: '创建目录（递归）', required: true },
+  { name: 'readDir', type: '(path: string) => Promise<string[]>', desc: '列出目录项', required: true },
+  { name: 'stat', type: '(path: string) => Promise<RfsStatResult>', desc: '获取文件/目录元数据', required: true },
+  { name: 'exists', type: '(path: string) => Promise<boolean>', desc: '判断路径是否存在', required: true },
+  { name: 'remove', type: '(path: string, options?) => Promise<void>', desc: '删除文件或目录', required: true },
+  { name: 'rename', type: '(src: string, dest: string) => Promise<void>', desc: '原子重命名/移动；用于临时目录收敛', required: true },
+  { name: 'symlink', type: '(target: string, linkPath: string) => Promise<void>', desc: '创建符号链接；用于挂载依赖', required: true },
+  { name: 'glob', type: '(root: string, pattern: string, options?) => Promise<string[]>', desc: '按 glob 模式匹配文件；返回相对 root 的路径', required: true },
+  { name: 'grep', type: '(root: string, pattern: string, options?) => Promise<string[]>', desc: '按内容模式搜索文件', required: true },
+]} />
+
+## 内置实现
+
+### @radium-fs/node
+
+基于 `node:fs` 和 `node:crypto` 的 Node.js 适配器：
+
+```typescript
+import { createStore } from '@radium-fs/core';
+import { nodeAdapter } from '@radium-fs/node';
+
+const store = createStore({
+  root: '/project',
+  adapter: nodeAdapter(),
+});
+```
+
+### @radium-fs/memory
+
+用于测试与临时运行场景的内存适配器：
+
+```typescript
+import { createStore } from '@radium-fs/core';
+import { memoryAdapter } from '@radium-fs/memory';
+
+const store = createStore({
+  root: '/virtual',
+  adapter: memoryAdapter(),
+});
+```
+
+## 自定义 Adapter
+
+可按目标平台自行实现 `RfsAdapter`：
+
+```typescript
+import type { RfsAdapter } from '@radium-fs/core';
+
+const myAdapter: RfsAdapter = {
+  async hash(data) {
+    const buffer = await crypto.subtle.digest('SHA-256', data);
+    return Array.from(new Uint8Array(buffer))
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join('');
+  },
+  async readFile(path) {
+    const f = await Deno.open(path);
+    const bytes = await Deno.readAll(f);
+    f.close();
+    return bytes;
+  },
+  async writeFile(path, content) {
+    await Deno.writeTextFile(path, typeof content === 'string' ? content : new TextDecoder().decode(content));
+  },
+  // ... implement all other methods
+};
+```
+
+<Callout type="tip">
+单元测试推荐使用 `@radium-fs/memory`：不依赖文件系统，每个测试都可用独立 adapter 实例。
+</Callout>
+
+## 下一步
+
+继续阅读 [Events](/zh/docs/api/events)，了解生命周期事件模型。

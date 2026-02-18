@@ -1,4 +1,5 @@
-import { navigation, flatItems, type NavItem } from './navigation';
+import { flatItems, navigationForLocale, type NavItem } from './navigation';
+import type { Locale } from './locale';
 
 export interface SearchResult {
   title: string;
@@ -6,26 +7,40 @@ export interface SearchResult {
   href: string;
 }
 
-const sectionMap = new Map<string, string>();
-for (const section of navigation) {
-  for (const item of section.items) {
-    sectionMap.set(item.href, section.title);
+interface SearchIndex {
+  items: NavItem[];
+  sectionMap: Map<string, string>;
+}
+
+const indices: Record<Locale, SearchIndex | null> = {
+  en: null,
+  zh: null,
+};
+
+function ensureIndex(locale: Locale): SearchIndex {
+  const existing = indices[locale];
+  if (existing) return existing;
+
+  const sectionMap = new Map<string, string>();
+  for (const section of navigationForLocale(locale)) {
+    for (const item of section.items) {
+      sectionMap.set(item.href, section.title);
+    }
   }
+
+  const index = {
+    items: flatItems(locale),
+    sectionMap,
+  };
+
+  indices[locale] = index;
+  return index;
 }
 
-let indexReady = false;
-let items: NavItem[] = [];
-
-function ensureIndex() {
-  if (indexReady) return;
-  items = flatItems();
-  indexReady = true;
-}
-
-export function search(query: string, limit = 8): SearchResult[] {
-  ensureIndex();
+export function search(query: string, locale: Locale, limit = 8): SearchResult[] {
   if (!query.trim()) return [];
 
+  const { items, sectionMap } = ensureIndex(locale);
   const q = query.toLowerCase();
   const results: SearchResult[] = [];
 

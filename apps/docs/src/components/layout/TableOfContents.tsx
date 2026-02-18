@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useLocation } from 'react-router';
+import type { Locale } from '../../lib/locale';
 
 interface TocItem {
   id: string;
@@ -7,23 +8,49 @@ interface TocItem {
   level: number;
 }
 
+function toHeadingId(raw: string, fallback: string): string {
+  const base = raw
+    .trim()
+    .toLowerCase()
+    .replace(/[\s/]+/g, '-')
+    .replace(/[^\p{L}\p{N}_-]/gu, '')
+    .replace(/-+/g, '-')
+    .replace(/(^-|-$)/g, '');
+  return base || fallback;
+}
+
 function scanHeadings(container: Element): TocItem[] {
   const headings = container.querySelectorAll('h2, h3');
   const result: TocItem[] = [];
-  headings.forEach((h) => {
-    if (!h.id) {
-      h.id = h.textContent?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') ?? '';
+  const used = new Map<string, number>();
+
+  headings.forEach((h, index) => {
+    const text = h.textContent ?? '';
+    const fallback = `section-${index + 1}`;
+    const suggested = h.id || toHeadingId(text, fallback);
+    const count = used.get(suggested) ?? 0;
+    const id = count === 0 ? suggested : `${suggested}-${count + 1}`;
+    used.set(suggested, count + 1);
+
+    if (!h.id || h.id !== id) {
+      h.id = id;
     }
+
     result.push({
-      id: h.id,
-      text: h.textContent ?? '',
+      id,
+      text,
       level: h.tagName === 'H2' ? 2 : 3,
     });
   });
+
   return result;
 }
 
-export function TableOfContents() {
+interface TableOfContentsProps {
+  locale: Locale;
+}
+
+export function TableOfContents({ locale }: TableOfContentsProps) {
   const [items, setItems] = useState<TocItem[]>([]);
   const [activeId, setActiveId] = useState<string>('');
   const intersectionRef = useRef<IntersectionObserver | null>(null);
@@ -34,7 +61,7 @@ export function TableOfContents() {
     if (!container) return;
 
     function refresh() {
-      const tocItems = scanHeadings(container!);
+      const tocItems = scanHeadings(container);
       setItems(tocItems);
       setActiveId('');
 
@@ -53,14 +80,12 @@ export function TableOfContents() {
         { rootMargin: '-80px 0px -60% 0px', threshold: 0 },
       );
 
-      const headings = container!.querySelectorAll('h2, h3');
+      const headings = container.querySelectorAll('h2, h3');
       headings.forEach((h) => intersectionRef.current!.observe(h));
     }
 
-    // Scan immediately (covers SPA navigation where content is already rendered)
     refresh();
 
-    // Watch for lazy-loaded content appearing in the container
     const mutation = new MutationObserver(() => refresh());
     mutation.observe(container, { childList: true, subtree: true });
 
@@ -82,7 +107,7 @@ export function TableOfContents() {
   return (
     <nav className="py-4 text-xs">
       <h4 className="px-4 mb-3 text-[11px] font-semibold text-text-secondary uppercase tracking-wider">
-        On this page
+        {locale === 'zh' ? '本页目录' : 'On this page'}
       </h4>
       <ul>
         {items.map((item) => (

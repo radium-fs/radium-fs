@@ -1,8 +1,15 @@
 import { Link, useLocation } from 'react-router';
-import { navigation } from '../../lib/navigation';
+import { navigationForLocale } from '../../lib/navigation';
+import type { Locale } from '../../lib/locale';
 
-export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
+interface SidebarProps {
+  locale: Locale;
+  onNavigate?: () => void;
+}
+
+export function Sidebar({ locale, onNavigate }: SidebarProps) {
   const { pathname } = useLocation();
+  const navigation = navigationForLocale(locale);
 
   return (
     <nav className="py-4 overflow-y-auto text-sm">
@@ -36,7 +43,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
 
       <div className="mb-6">
         <h3 className="px-4 mb-2 text-[11px] font-semibold text-text-secondary uppercase tracking-wider">
-          Interactive
+          {locale === 'zh' ? '交互' : 'Interactive'}
         </h3>
         <ul>
           <li>

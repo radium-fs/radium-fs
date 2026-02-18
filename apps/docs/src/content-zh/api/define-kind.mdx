@@ -1,0 +1,116 @@
+import { ApiSignature, PropsTable, Callout } from '../../components/mdx';
+
+# defineKind()
+
+`defineKind()` 用于创建 **Kind**（构建 space 的配方）。一个 Kind 包含 `kind` 名称、初始化钩子 `onInit`，以及可选的命令处理钩子 `onCommand`。
+
+## 签名
+
+<ApiSignature>{`function defineKind<TInput, TCommand = never, TRuntime = Record<string, unknown>>(
+  def: RfsKindDef<TInput, TCommand, TRuntime>
+): RfsKind<TInput, TCommand, TRuntime>`}</ApiSignature>
+
+## RfsKindDef
+
+`defineKind()` 的参数结构：
+
+<PropsTable items={[
+  { name: 'kind', type: 'string', desc: '唯一 Kind 标识符', required: true },
+  { name: 'cacheKey', type: '(input: TInput) => Record<string, unknown>', desc: '自定义缓存键提取；省略时使用完整 input', required: false },
+  { name: 'onInit', type: '(ctx: RfsOnInitContext) => Promise<RfsInitResult | void>', desc: '初始化钩子；space 首次构建时运行', required: true },
+  { name: 'onCommand', type: '(ctx: RfsOnCommandContext) => Promise<RfsCommandResult>', desc: '命令处理钩子；启用 space.send()，只读 space 可省略', required: false },
+]} />
+
+## 返回值
+
+`defineKind()` 返回一个**冻结**的 `RfsKind` 对象（字段与定义一致）。该对象会作为第一个参数传给 `store.ensure()`。
+
+## onInit 上下文
+
+`onInit` 会接收如下上下文对象：
+
+| 字段 | 类型 | 说明 |
+|----------|------|-------------|
+| `input` | `TInput` | 传给 `store.ensure(kind, input)` 的输入 |
+| `space` | `RfsSpaceApi` | 文件操作、`dep()`、`runtime`、`local` |
+| `signal` | `AbortSignal` | 用于取消的中断信号 |
+| `emit` | `(payload: unknown) => void` | 向 `store.on()` 订阅者发出自定义事件 |
+
+## onCommand 上下文
+
+`onCommand` 会接收如下上下文对象：
+
+| 字段 | 类型 | 说明 |
+|----------|------|-------------|
+| `command` | `TCommand` | 通过 `space.send(command)` 发送的命令 |
+| `current` | `{ exports, metadata }` | 最近一次 init/command 后的当前状态 |
+| `space` | `RfsCommandSpaceApi` | 与 `RfsSpaceApi` 基本一致，但**不包含** `dep()` |
+| `signal` | `AbortSignal` | 中断信号 |
+| `emit` | `(payload: unknown) => void` | 发出自定义事件 |
+
+<Callout type="note">
+`RfsCommandSpaceApi` 不包含 `dep()`。依赖只能在 `onInit` 阶段挂载。
+</Callout>
+
+## RfsInitResult
+
+`onInit` 的返回值：
+
+<PropsTable items={[
+  { name: 'exports', type: 'string \| Record<string, string>', desc: "导出映射。字符串简写（如 'dist'）等价于 { '.': 'dist' }。省略时默认 { '.': '.' }", required: false },
+  { name: 'metadata', type: 'Record<string, unknown>', desc: '用户自定义元数据，写入 manifest', required: false },
+]} />
+
+## 基础用法
+
+```typescript
+import { defineKind } from '@radium-fs/core';
+
+const greeting = defineKind<{ name: string; lang: 'en' | 'zh' }>({
+  kind: 'greeting',
+  async onInit({ input, space }) {
+    const msg = input.lang === 'en' ? `Hello, ${input.name}!` : `你好，${input.name}！`;
+    await space.writeFile('message.txt', msg);
+  },
+});
+```
+
+## 搭配 Commands
+
+```typescript
+type CounterCommand = { action: 'inc' | 'dec' };
+
+const counter = defineKind<{ name: string }, CounterCommand>({
+  kind: 'counter',
+  async onInit({ input, space }) {
+    await space.writeFile('state.json', JSON.stringify({ count: 0 }));
+  },
+  async onCommand({ command, current, space }) {
+    const state = JSON.parse(await space.readFile('state.json'));
+    state.count += command.action === 'inc' ? 1 : -1;
+    await space.writeFile('state.json', JSON.stringify(state));
+  },
+});
+```
+
+## cacheKey 建议
+
+<Callout type="tip">
+当部分 input 字段不会影响输出时，建议使用 `cacheKey`。例如仅用于日志的 `debug` 字段应被排除，这样 `{ env: 'prod', debug: true }` 和 `{ env: 'prod', debug: false }` 可以复用同一缓存 space。
+</Callout>
+
+```typescript
+const bundle = defineKind<{ env: string; debug: boolean }>({
+  kind: 'bundle',
+  cacheKey: (input) => ({ env: input.env }), // ignore debug
+  async onInit({ input, space }) {
+    const outDir = input.env === 'prod' ? 'dist' : 'dist-dev';
+    await space.writeFile('out/index.js', '/* built */');
+    return { exports: outDir };
+  },
+});
+```
+
+## 下一步
+
+继续阅读 [createStore()](/zh/docs/api/create-store)，了解如何创建 store 并调用 `ensure()`。

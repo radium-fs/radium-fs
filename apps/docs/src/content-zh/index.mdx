@@ -1,0 +1,41 @@
+import { DagDiagram } from '../components/DagDiagram';
+
+# 介绍
+
+**radium-fs** 是一个面向多 agent 系统的文件系统级上下文组合引擎。
+
+它管理一组持久化的文件系统空间（space）。每个 space 都是一个真实目录，并且拥有确定性身份。`dep()` 通过符号链接连接各个 space，让 agent 只挂载自己需要的上下文，在零拷贝前提下组合复杂工作空间。
+
+<DagDiagram preset="intro-overview" />
+
+## 两条核心规则
+
+1. **拓扑由 `dep()` 决定**：依赖关系决定每个 space 挂载哪些上下文。
+2. **复用由 `kind + input` 决定**：相同输入生成相同 `dataId`，`ensure()` 可直接命中。
+
+当 `task-context` 的 input 发生变化时，只有输入链路依赖 `task-context` 的 space 会重建；其他无关路径保持复用。
+
+## 为什么选择 radium-fs？
+
+复杂多 agent 系统需要的是快速上下文组合，而不是重复复制上下文。radium-fs 提供一层共享上下文基础设施：依赖连接显式可见、重建范围可预测、每个节点都能在磁盘上直接检查。
+
+## 关键特性
+
+- **确定性**：`kind + input → dataId`。相同输入始终生成相同路径的 space。
+- **可组合**：`dep()` 为每个 space 声明依赖集合。符号链接在毫秒级完成挂载，零拷贝。
+- **选择性重建**：input 变化只重建受影响路径，无关 space 保持可复用。
+- **可恢复**：删除任意 space 后，下一次 `ensure()` 会按配方自动重建。
+- **物理可见**：每个 space 都是实际目录，可直接用 grep/find/rg 等工具。
+- **运行时无关**：核心层无平台绑定，JavaScript 可运行的地方都可使用。
+
+## 包列表
+
+| 包名 | 说明 |
+|---------|-------------|
+| `@radium-fs/core` | 运行时无关核心引擎（defineKind、createStore、types） |
+| `@radium-fs/node` | Node.js 文件系统适配器（要求 Node.js ≥ 22） |
+| `@radium-fs/memory` | 内存适配器（浏览器 + Node.js） |
+
+## 下一步
+
+先阅读 [快速上手](/zh/docs/getting-started) 构建第一个 space，再进入 [依赖关系](/zh/docs/concepts/dependencies) 学习多 agent 上下文连接方式。

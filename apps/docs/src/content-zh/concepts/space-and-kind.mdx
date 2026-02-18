@@ -1,0 +1,74 @@
+import { Callout } from '../../components/mdx';
+import { DagDiagram } from '../../components/DagDiagram';
+
+# Space 与 Kind
+
+在 radium-fs 中，所有被管理的产物都存在于 **Space** 中；每个 space 都由一个 **Kind** 创建。
+
+## 什么是 Space？
+
+Space 是磁盘上的一个目录，具有三项关键属性：
+
+1. **确定性路径**：由 `kind + input` 推导，相同配方始终得到相同路径。
+2. **Manifest**：`.radium-fs-manifest.json`，记录 origin、exports、dependencies、时间戳等信息。
+3. **内容文件**：初始化时由 `onInit` 写入的文件集合。
+
+Space 是真实目录，可以像普通文件夹一样使用 `ls`、`cat`、`grep`。radium-fs 只是额外提供了身份、缓存语义和依赖图。
+
+## 什么是 Kind？
+
+Kind 是通过 `defineKind()` 创建的“工厂定义”，它告诉 radium-fs：
+
+- **name**：该 Kind 产出的工件类型（如 `"component"`、`"schema"`、`"config"`）。
+- **input**：描述该 space 依赖参数的 TypeScript 类型。
+- **onInit**：首次创建时填充目录内容的钩子。
+- **exports**：供其他 space 消费的具名输出路径。
+
+```typescript
+const Greeter = defineKind({
+  kind: 'greeter',
+  onInit: async ({ input, space }) => {
+    await space.writeFile(
+      'hello.txt',
+      new TextEncoder().encode(`Hello, ${input.message}!`),
+    );
+    return { exports: { greeting: 'hello.txt' } };
+  },
+});
+```
+
+`onInit` 在首次构建时执行，负责写文件并返回 exports 映射。`space` 对象提供类似文件系统的 API（`writeFile`、`mkdir` 等），作用域仅限当前 space 根目录。
+
+调用 `ensure()` 后，space 会以真实目录形式存在于磁盘：
+
+<DagDiagram preset="single-space" />
+
+## `dataId`：确定性身份
+
+最重要的概念是 **dataId**：它是 kind 名称与序列化 input 的 SHA-256 哈希。相同 kind 与相同 input 会得到相同 `dataId`，从而解析到同一路径。
+
+<Callout type="tip">
+因为身份是确定性的，当 space 已存在时 radium-fs 可以完全跳过初始化。这就是缓存命中的基础：不依赖时间戳和文件监听，只依赖内容寻址。
+</Callout>
+
+## Manifest
+
+每个 space 都包含 `.radium-fs-manifest.json`：
+
+```json
+{
+  "origin": { "kind": "greeter", "inputHash": "a1b2c3..." },
+  "exports": { "greeting": "hello.txt" },
+  "dependencies": {},
+  "commands": [],
+  "metadata": {},
+  "createdAt": "2025-01-01T00:00:00.000Z",
+  "updatedAt": "2025-01-01T00:00:00.000Z"
+}
+```
+
+Manifest 由系统自动维护，无需手工编写。
+
+## 下一步
+
+继续阅读 [Store 与 ensure()](/zh/docs/concepts/store-and-ensure)，了解 `createStore()` 如何编排多个 space。

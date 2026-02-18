@@ -1,0 +1,88 @@
+import { Callout } from '../../components/mdx';
+
+# 命令系统
+
+**Commands** 用于在初始化后继续修改 space。`onInit` 只在创建时运行一次，而 `onCommand` 可以通过 `space.send()` 被重复调用。
+
+## 何时使用 Commands
+
+Commands 适用于以下场景：
+
+- **增量更新**：不重建即可向已有 space 追加数据。
+- **交互式流程**：响应用户操作或外部事件。
+- **有状态空间**：维护会随时间演化的可变状态。
+
+<Callout type="note">
+Commands 是可选能力。多数 space 只需要 `onInit`；只有在“创建后仍需持续变更”时再引入 commands。
+</Callout>
+
+## 定义带 Commands 的 Kind
+
+在 `defineKind` 中增加第二个泛型参数作为命令类型，并实现 `onCommand`：
+
+```typescript
+type CounterCommand = { type: 'increment'; amount: number };
+
+const Counter = defineKind<{ name: string }, CounterCommand>({
+  kind: 'counter',
+  async onInit({ input, space }) {
+    await space.writeFile(
+      'state.json',
+      new TextEncoder().encode(JSON.stringify({ name: input.name, count: 0 })),
+    );
+    return { exports: { state: 'state.json' } };
+  },
+  async onCommand({ command, space, emit }) {
+    const raw = await space.readFile('state.json');
+    const state = JSON.parse(raw);
+    state.count += command.amount;
+    await space.writeFile(
+      'state.json',
+      new TextEncoder().encode(JSON.stringify(state)),
+    );
+    emit({ type: 'counter:updated', count: state.count });
+  },
+});
+```
+
+`onCommand` 会收到：
+
+- **command**：通过 `space.send()` 发送的命令对象。
+- **space**：文件系统 API（可读写，但不提供 `dep()`）。
+- **emit**：向订阅方发出自定义事件的函数。
+
+## 发送命令
+
+创建 space 后，使用 `space.send()` 分发命令：
+
+```typescript
+const space = await store.ensure(Counter, { name: 'my-counter' });
+
+await space.send({ type: 'increment', amount: 1 });
+// state.json → { name: "my-counter", count: 1 }
+
+await space.send({ type: 'increment', amount: 5 });
+// state.json → { name: "my-counter", count: 6 }
+```
+
+每条命令都会原地更新该 space，`state.json` 会反映累计后的状态。
+
+## 事件
+
+Commands 会通过 store 发出事件：
+
+| 事件 | 触发时机 |
+|-------|------|
+| `command:start` | `onCommand` 执行前 |
+| `command:done` | `onCommand` 执行后 |
+| `custom` | 在 `onCommand` 内通过 `emit()` 触发 |
+
+可通过 `store.on()` 订阅所有事件，或通过 `space.onCustom()` 仅订阅自定义事件。
+
+## 命令历史
+
+每次命令执行都会记录到 space manifest 的 `commands` 数组中，形成完整审计轨迹。
+
+## 下一步
+
+继续阅读 [API 参考](/zh/docs/api/define-kind)，查看完整函数签名与类型定义。

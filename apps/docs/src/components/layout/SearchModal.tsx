@@ -1,13 +1,15 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router';
 import { search, type SearchResult } from '../../lib/search';
+import type { Locale } from '../../lib/locale';
 
 interface SearchModalProps {
+  locale: Locale;
   open: boolean;
   onClose: () => void;
 }
 
-export function SearchModal({ open, onClose }: SearchModalProps) {
+export function SearchModal({ locale, open, onClose }: SearchModalProps) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [selected, setSelected] = useState(0);
@@ -24,9 +26,9 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
   }, [open]);
 
   useEffect(() => {
-    setResults(search(query));
+    setResults(search(query, locale));
     setSelected(0);
-  }, [query]);
+  }, [query, locale]);
 
   const go = useCallback(
     (href: string) => {
@@ -71,7 +73,7 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Search docs..."
+            placeholder={locale === 'zh' ? '搜索文档...' : 'Search docs...'}
             className="flex-1 bg-transparent text-text-primary text-sm outline-none placeholder:text-text-secondary"
           />
           <kbd className="text-[10px] text-text-secondary bg-surface px-1.5 py-0.5 rounded border border-border">
@@ -83,7 +85,7 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
           <ul className="max-h-64 overflow-y-auto py-2">
             {results.length === 0 ? (
               <li className="px-4 py-6 text-center text-text-secondary text-sm">
-                No results for &ldquo;{query}&rdquo;
+                {locale === 'zh' ? `未找到 “${query}” 的结果` : `No results for “${query}”`}
               </li>
             ) : (
               results.map((r, i) => (
@@ -105,7 +107,7 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
 
         {!query && (
           <div className="px-4 py-6 text-center text-text-secondary text-sm">
-            Start typing to search documentation
+            {locale === 'zh' ? '输入关键词以搜索文档' : 'Start typing to search documentation'}
           </div>
         )}
       </div>

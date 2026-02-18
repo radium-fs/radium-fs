@@ -1,0 +1,68 @@
+import { DagDiagram } from '../components/DagDiagram';
+
+# 快速上手
+
+通过三个步骤搭建你的第一个上下文 space。
+
+## 1. 定义 Kind
+
+**Kind** 是一个定义 space 生成方式的配方。可以把它理解为 Dockerfile：它描述目录里应该有什么，但在调用 `ensure()` 之前不会真正创建目录。
+
+```typescript
+import { defineKind } from '@radium-fs/core';
+
+const Greeter = defineKind({
+  kind: 'greeter',
+  onInit: async ({ input, space }) => {
+    const text = `Hello, ${input.message}!`;
+    await space.writeFile('hello.txt', new TextEncoder().encode(text));
+    return { exports: { greeting: 'hello.txt' } };
+  },
+});
+```
+
+`onInit` 会接收 `input` 和用于写文件的 `space` 对象。返回值用于声明该 space 的 **exports**，也就是可供其他 space 挂载的具名路径。
+
+## 2. 创建 Space（缓存未命中）
+
+调用 `store.ensure()` 获取或创建 space。首次调用会执行 `onInit`，并从零开始构建该 space。
+
+```typescript
+import { createStore } from '@radium-fs/core';
+import { memoryAdapter } from '@radium-fs/memory';
+
+const store = createStore({
+  root: '/my-project/.radium-fs-data',
+  adapter: memoryAdapter(),
+});
+
+const space = await store.ensure(Greeter, { message: 'world' });
+// space.path → /my-project/.radium-fs-data/greeter/ab/abc123.../space
+```
+
+会触发 `init:start` → `init:done` 事件序列。此时 space 已落盘，并包含 `onInit` 写入的文件。
+
+<DagDiagram preset="single-space" />
+
+## 3. 再次 Ensure（缓存命中）
+
+使用**相同 input** 再次调用 `ensure()`。由于该 space 已存在，`onInit` 会被完全跳过。
+
+```typescript
+const same = await store.ensure(Greeter, { message: 'world' });
+// Instant — one `init:cached` event, zero computation
+```
+
+相同的 `kind + input` 总会解析到同一个 space，这就是内容寻址机制的核心。
+
+在多 agent 工作流里，建议记住下面这个模型：
+
+- 用 `dep()` 决定每个 space 挂载哪些上下文。
+- 用 `input` 字段决定每条挂载路径何时复用、何时重建。
+
+## 下一步
+
+- 在 [依赖关系](/zh/docs/concepts/dependencies) 中学习按需连接 agent 上下文
+- 在 [Space 与 Kind](/zh/docs/concepts/space-and-kind) 中理解数据模型
+- 在 [缓存机制](/zh/docs/concepts/caching) 中理解 `dataId` 复用规则
+- 在 [Playground](/playground) 中自由实验

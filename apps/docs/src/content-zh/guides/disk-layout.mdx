@@ -1,0 +1,117 @@
+import { Callout } from '../../components/mdx';
+
+# 磁盘布局
+
+本指南说明在使用真实文件系统适配器（如 `@radium-fs/node`）时，radium-fs 如何组织磁盘数据。
+
+## 根目录结构
+
+store 根目录（通过 `createStore({ root })` 传入）下会包含一个数据目录：
+
+```
+{root}/
+└── .radium-fs-data/
+    └── {kind}/
+        └── {shard}/
+            ├── {dataId}/
+            ├── {dataId}/
+            └── .tmp-{dataId}-{random}/   ← temp during build
+```
+
+- **kind**：space 类型（来自 `defineKind({ kind })`）
+- **shard**：`dataId` 前两位（用于分片存储）
+- **dataId**：`kind + "\0" + canonicalStringify(input)` 的 SHA-256 哈希
+
+## 单个 Space 目录结构
+
+每个 space 目录结构如下：
+
+```
+{dataId}/
+├── .radium-fs-manifest.json      ← Metadata
+├── space/                         ← Public content (onInit/onCommand write here)
+│   ├── src/
+│   ├── dist/
+│   ├── lib-a → <symlink to dependency>
+│   └── ...
+├── local/                         ← Private storage (space.local)
+│   └── ...
+└── .radium-fs-local-deps/         ← Local-scope child dependencies
+    └── {child-kind}/{shard}/{childDataId}/
+        ├── .radium-fs-manifest.json
+        ├── space/
+        ├── local/
+        └── .radium-fs-local-deps/
+```
+
+## Manifest 格式
+
+`.radium-fs-manifest.json` 记录 space 生命周期元数据：
+
+```json
+{
+  "version": 1,
+  "origin": {
+    "kind": "greeter",
+    "input": { "name": "World" }
+  },
+  "exports": { ".": "." },
+  "dependencies": [
+    {
+      "mountPath": "lib",
+      "origin": { "kind": "lib", "input": { "name": "utils" } },
+      "scope": "shared",
+      "export": "."
+    }
+  ],
+  "commands": [],
+  "metadata": {},
+  "createdAt": "2025-02-18T12:00:00.000Z",
+  "updatedAt": "2025-02-18T12:00:00.000Z"
+}
+```
+
+| 字段 | 说明 |
+|-------|-------------|
+| `version` | 协议版本（目前固定为 1） |
+| `origin` | 生成该 space 的 kind 与 input |
+| `exports` | 导出名到路径的映射（相对 `space/`） |
+| `dependencies` | 已挂载依赖（对应 `space/` 中的符号链接） |
+| `commands` | 带 `onCommand` 的 space 的命令历史 |
+| `metadata` | 来自 `onInit` / `onCommand` 的用户元数据 |
+
+## 依赖的符号链接结构
+
+依赖会以符号链接形式挂载到 `space/`：
+
+```
+space/
+├── lib-a → ../../lib/ab/cd1234.../space/    ← shared dependency
+├── vendor/
+│   └── lib-b → ../../../lib/ef/5678.../space/
+└── ...
+```
+
+- **Shared** 依赖位于 `{root}/.radium-fs-data/{kind}/{shard}/{dataId}/`
+- **Local** 依赖位于 `{parent}/.radium-fs-local-deps/{kind}/{shard}/{dataId}/`
+
+## 构建期间的临时目录
+
+缓存未命中时，radium-fs 会先在临时目录构建，完成后再进行原子重命名：
+
+```
+.radium-fs-data/{kind}/{shard}/.tmp-{dataId}-{random}/
+├── .radium-fs-manifest.json
+├── space/
+└── local/
+```
+
+`onInit` 完成后，临时目录会通过 `rename()` 变为最终 `{dataId}/` 路径，从而避免磁盘上出现半构建状态。
+
+<Callout type="tip">
+原子重命名意味着：即使构建崩溃或中断，也不会留下损坏的 space；只可能留下可清理的 `.tmp-*` 孤立目录。
+</Callout>
+
+## 下一步
+
+至此你已完成指南部分。可继续阅读 [API 参考](/zh/docs/api/define-kind) 查看完整类型定义，或返回 [介绍](/zh/docs) 浏览其他主题。

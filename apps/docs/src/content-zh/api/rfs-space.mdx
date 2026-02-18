@@ -1,0 +1,97 @@
+import { ApiSignature, PropsTable, Callout } from '../../components/mdx';
+
+# RfsSpace
+
+**Space** 是 `store.ensure()` 返回的对象。它代表一个可直接使用的 space 实例，包含元数据、exports，以及（当 Kind 定义了 `onCommand` 时）命令方法。
+
+## RfsSpaceBase
+
+所有 space 都包含以下基础属性：
+
+<PropsTable items={[
+  { name: 'dataId', type: 'string', desc: '确定性唯一标识（由 kind + cacheKey/input 计算）', required: true },
+  { name: 'kind', type: 'string', desc: 'Kind 标识符', required: true },
+  { name: 'origin', type: 'RfsOrigin', desc: '来源信息（kind、dataId、input）', required: true },
+  { name: 'path', type: 'string', desc: 'space 目录的绝对路径', required: true },
+  { name: 'exports', type: 'Record<string, string>', desc: 'exports 映射（绝对路径）', required: true },
+  { name: 'manifest', type: 'RfsManifest', desc: '只读 manifest 快照', required: true },
+]} />
+
+## RfsSpaceWithCommands
+
+当 Kind 定义了 `onCommand` 时，space 还会额外包含：
+
+| 方法 | 说明 |
+|--------|-------------|
+| `send(command)` | 发送命令，返回更新后的 exports 与 metadata |
+| `on(event, handler)` | 监听命令相关事件 |
+| `onCustom(handler)` | 监听 `onCommand` 中通过 `emit()` 发出的自定义事件 |
+
+## RfsSpace Conditional Type
+
+<ApiSignature>{`type RfsSpace<TCommand> =
+  [TCommand] extends [never]
+    ? RfsSpaceBase
+    : RfsSpaceBase & RfsSpaceWithCommands<TCommand>`}</ApiSignature>
+
+- **无 onCommand**（`TCommand = never`）：仅基础属性
+- **有 onCommand**：基础属性 + `send()`、`on()`、`onCustom()`
+
+## RfsSpaceApi
+
+`onInit` 中的 `space` 参数：
+
+<PropsTable items={[
+  { name: 'path', type: 'string', desc: 'space 目录绝对路径', required: true },
+  { name: 'runtime', type: 'TRuntime', desc: '运行时上下文（store runtime + extraRuntime 合并）', required: true },
+  { name: 'local', type: 'RfsLocalApi', desc: '私有存储（物理隔离在 local/ 目录）', required: true },
+  { name: 'writeFile', type: '(path, content) => Promise<void>', desc: '写文件', required: true },
+  { name: 'readFile', type: '(path, options?) => Promise<string>', desc: '读文件（字符串）', required: true },
+  { name: 'mkdir', type: '(path) => Promise<void>', desc: '创建目录', required: true },
+  { name: 'readDir', type: '(path, options?) => Promise<string[]>', desc: '列出目录项', required: true },
+  { name: 'stat', type: '(path) => Promise<RfsStatResult>', desc: '获取文件/目录元数据', required: true },
+  { name: 'copy', type: '(src, dest) => Promise<void>', desc: '复制文件或目录', required: true },
+  { name: 'move', type: '(src, dest) => Promise<void>', desc: '移动文件或目录', required: true },
+  { name: 'remove', type: '(path, options?) => Promise<void>', desc: '删除文件或目录', required: true },
+  { name: 'glob', type: '(pattern, options?) => Promise<string[]>', desc: '按 glob 模式匹配文件', required: true },
+  { name: 'grep', type: '(pattern, options?) => Promise<string[]>', desc: '按内容模式搜索文件', required: true },
+  { name: 'dep', type: '(mountPath, kind, input, options?) => Promise<string>', desc: '在 space/{mountPath} 挂载依赖', required: true },
+]} />
+
+## RfsCommandSpaceApi
+
+`onCommand` 中的 `space` 参数。与 `RfsSpaceApi` 基本一致，但**不包含** `dep()`，因为依赖只能在 `onInit` 阶段挂载。
+
+## RfsLocalApi
+
+私有存储 API。物理上隔离在 `local/` 目录，不会出现在 `readDir` 或 `glob` 扫描结果中。可用于缓存、计数器、内部队列等。
+
+| 方法 | 说明 |
+|--------|-------------|
+| `path` | local 目录绝对路径 |
+| `writeFile(path, content)` | 写文件 |
+| `readFile(path, options?)` | 读文件 |
+| `mkdir(path)` | 创建目录 |
+| `readDir(path, options?)` | 列出目录项 |
+| `stat(path)` | 获取元数据 |
+| `remove(path, options?)` | 删除文件或目录 |
+
+## 示例
+
+```typescript
+const space = await store.ensure(MyKind, { env: 'prod' });
+
+// 基础属性
+console.log(space.dataId);
+console.log(space.path);
+console.log(space.exports['.']); // default export path
+
+// 如果 Kind 定义了 onCommand：
+if ('send' in space) {
+  const { exports, metadata } = await space.send({ action: 'increment' });
+}
+```
+
+## 下一步
+
+继续阅读 [RfsAdapter](/zh/docs/api/rfs-adapter)，了解平台 I/O 适配层。

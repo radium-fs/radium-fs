@@ -2,21 +2,21 @@ import { lazy, Suspense } from 'react';
 import { Routes, Route } from 'react-router';
 import { DocLayout } from '../components/layout/DocLayout';
 
-const IntroPage = lazy(() => import('../content/index.mdx'));
-const GettingStartedPage = lazy(() => import('../content/getting-started.mdx'));
-const SpaceAndKindPage = lazy(() => import('../content/concepts/space-and-kind.mdx'));
-const StoreAndEnsurePage = lazy(() => import('../content/concepts/store-and-ensure.mdx'));
-const DependenciesPage = lazy(() => import('../content/concepts/dependencies.mdx'));
-const CachingPage = lazy(() => import('../content/concepts/caching.mdx'));
-const CommandsPage = lazy(() => import('../content/concepts/commands.mdx'));
-const DefineKindPage = lazy(() => import('../content/api/define-kind.mdx'));
-const CreateStorePage = lazy(() => import('../content/api/create-store.mdx'));
-const RfsSpacePage = lazy(() => import('../content/api/rfs-space.mdx'));
-const RfsAdapterPage = lazy(() => import('../content/api/rfs-adapter.mdx'));
-const EventsPage = lazy(() => import('../content/api/events.mdx'));
-const NodeSetupPage = lazy(() => import('../content/guides/node-setup.mdx'));
-const MemoryAdapterPage = lazy(() => import('../content/guides/memory-adapter.mdx'));
-const DiskLayoutPage = lazy(() => import('../content/guides/disk-layout.mdx'));
+const IntroPage = lazy(() => import('../content-zh/index.mdx'));
+const GettingStartedPage = lazy(() => import('../content-zh/getting-started.mdx'));
+const SpaceAndKindPage = lazy(() => import('../content-zh/concepts/space-and-kind.mdx'));
+const StoreAndEnsurePage = lazy(() => import('../content-zh/concepts/store-and-ensure.mdx'));
+const DependenciesPage = lazy(() => import('../content-zh/concepts/dependencies.mdx'));
+const CachingPage = lazy(() => import('../content-zh/concepts/caching.mdx'));
+const CommandsPage = lazy(() => import('../content-zh/concepts/commands.mdx'));
+const DefineKindPage = lazy(() => import('../content-zh/api/define-kind.mdx'));
+const CreateStorePage = lazy(() => import('../content-zh/api/create-store.mdx'));
+const RfsSpacePage = lazy(() => import('../content-zh/api/rfs-space.mdx'));
+const RfsAdapterPage = lazy(() => import('../content-zh/api/rfs-adapter.mdx'));
+const EventsPage = lazy(() => import('../content-zh/api/events.mdx'));
+const NodeSetupPage = lazy(() => import('../content-zh/guides/node-setup.mdx'));
+const MemoryAdapterPage = lazy(() => import('../content-zh/guides/memory-adapter.mdx'));
+const DiskLayoutPage = lazy(() => import('../content-zh/guides/disk-layout.mdx'));
 
 function Loading() {
   return (
@@ -26,9 +26,9 @@ function Loading() {
   );
 }
 
-export function DocPage() {
+export function DocPageZh() {
   return (
-    <DocLayout locale="en">
+    <DocLayout locale="zh">
       <Suspense fallback={<Loading />}>
         <Routes>
           <Route index element={<IntroPage />} />

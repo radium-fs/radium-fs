@@ -1,0 +1,89 @@
+import { ApiSignature, PropsTable, Callout } from '../../components/mdx';
+
+# createStore()
+
+`createStore()` 用于创建 radium-fs 的核心入口。它负责根目录管理、space 生命周期、缓存策略与事件分发。
+
+## 签名
+
+<ApiSignature>{`function createStore(options: RfsStoreOptions): RfsStore`}</ApiSignature>
+
+## RfsStoreOptions
+
+<PropsTable items={[
+  { name: 'root', type: 'string', desc: '数据根目录；会在该目录下创建 .radium-fs-data/', required: true },
+  { name: 'adapter', type: 'RfsAdapter', desc: '平台相关 I/O 层（文件系统 + 加密哈希）', required: true },
+  { name: 'runtime', type: 'Record<string, unknown>', desc: '全局运行时上下文，通过 space.runtime 注入到所有 space', required: false },
+  { name: 'locker', type: 'RfsLocker', desc: '可选分布式锁实现，用于多进程安全', required: false },
+]} />
+
+## RfsStore 方法
+
+| 方法 | 说明 |
+|--------|-------------|
+| `ensure(kind, input, options?)` | 获取或创建 space；命中缓存则直接返回，未命中执行 onInit |
+| `on(handler)` | 订阅生命周期事件（init、command、custom） |
+| `find(origin)` | 按 origin 查找已存在 space |
+| `has(origin)` | 判断 space 是否存在 |
+| `remove(origin)` | 删除 space 及其 local-scope 子依赖 |
+| `list(kind?)` | 列出全部 space，可按 kind 过滤 |
+
+## ensure()
+
+<ApiSignature>{`ensure<TInput, TCommand, TRuntime>(
+  kind: RfsKind<TInput, TCommand, TRuntime>,
+  input: TInput,
+  options?: RfsEnsureOptions
+): Promise<RfsSpace<TCommand>>`}</ApiSignature>
+
+### RfsEnsureOptions
+
+<PropsTable items={[
+  { name: 'signal', type: 'AbortSignal', desc: '用于取消 ensure 操作的中断信号', required: false },
+  { name: 'cache', type: 'boolean', desc: '是否使用缓存；true（默认）时若 space 已存在则直接返回，false 会强制重新执行 onInit', required: false },
+  { name: 'onStart', type: '(ctx) => void', desc: '初始化开始时触发（缓存未命中）', required: false },
+  { name: 'onCached', type: '(ctx) => void', desc: '缓存命中时触发', required: false },
+  { name: 'onDone', type: '(ctx) => void', desc: '初始化成功完成时触发', required: false },
+  { name: 'onError', type: '(ctx) => void', desc: '初始化失败时触发（Promise 同时 reject）', required: false },
+]} />
+
+## 基础用法
+
+```typescript
+import { createStore } from '@radium-fs/core';
+import { memoryAdapter } from '@radium-fs/memory';
+
+const store = createStore({
+  root: '/my-project',
+  adapter: memoryAdapter(),
+});
+
+const space = await store.ensure(MyKind, { env: 'prod' });
+console.log(space.path); // absolute path to the space directory
+```
+
+## 使用回调
+
+```typescript
+const space = await store.ensure(MyKind, input, {
+  onStart: ({ kind, dataId }) => console.log('Building', kind, dataId),
+  onCached: ({ kind, dataId }) => console.log('Cache hit', kind, dataId),
+  onDone: ({ kind, dataId }) => console.log('Done', kind, dataId),
+});
+```
+
+## 使用 Abort
+
+```typescript
+const controller = new AbortController();
+const promise = store.ensure(MyKind, input, { signal: controller.signal });
+controller.abort(); // cancels the build
+```
+
+<Callout type="note">
+`ensure()` 是幂等操作。对相同 `kind` 与 `input` 重复调用是安全的，后续调用会直接缓存命中返回。
+</Callout>
+
+## 下一步
+
+继续阅读 [RfsSpace](/zh/docs/api/rfs-space)，了解 `ensure()` 返回的 space 对象结构。

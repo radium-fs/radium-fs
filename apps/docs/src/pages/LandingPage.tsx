@@ -1,29 +1,86 @@
-import { Link } from 'react-router';
+import { Link, useLocation } from 'react-router';
 import { HeroDag } from '../components/HeroDag';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { InstallBlock } from '../components/mdx/InstallBlock';
+import { switchPathLocale, type Locale } from '../lib/locale';
 
-const PILLARS = [
-  {
-    title: 'Deterministic',
-    desc: 'kind + input = dataId. The same recipe always produces the same space at the same path. No timestamps, no heuristics — pure content addressing.',
+const copyByLocale: Record<Locale, {
+  navDocs: string;
+  navPlayground: string;
+  subtitle: string;
+  ctaDocs: string;
+  ctaPlayground: string;
+  ctaGithub: string;
+  installPackages: string;
+  footer: string;
+  pillars: Array<{ title: string; desc: string }>;
+}> = {
+  en: {
+    navDocs: 'Docs',
+    navPlayground: 'Playground',
+    subtitle: 'Compose complex multi-agent context spaces fast: dep() selects dependencies, input hashes decide reuse.',
+    ctaDocs: 'Read the Docs',
+    ctaPlayground: 'Try the Playground',
+    ctaGithub: 'View on GitHub',
+    installPackages: '@radium-fs/core @radium-fs/node',
+    footer: 'MIT License · Built with radium-fs',
+    pillars: [
+      {
+        title: 'Deterministic',
+        desc: 'kind + input = dataId. The same recipe always produces the same space at the same path. No timestamps, no heuristics — pure content addressing.',
+      },
+      {
+        title: 'Composable',
+        desc: 'Spaces declare dependencies via dep(). Symlinks wire them together in milliseconds with zero copies. The result is a physical DAG you can inspect with any tool.',
+      },
+      {
+        title: 'Resilient',
+        desc: 'Delete any space and it rebuilds from its recipe on the next ensure(). Dependencies cascade automatically. Only what changed gets rebuilt.',
+      },
+    ],
   },
-  {
-    title: 'Composable',
-    desc: 'Spaces declare dependencies via dep(). Symlinks wire them together in milliseconds with zero copies. The result is a physical DAG you can inspect with any tool.',
+  zh: {
+    navDocs: '文档',
+    navPlayground: 'Playground',
+    subtitle: '快速连接并构建复杂多 agent 上下文空间：dep() 选择依赖，input 哈希决定复用。',
+    ctaDocs: '阅读文档',
+    ctaPlayground: '体验 Playground',
+    ctaGithub: '查看 GitHub',
+    installPackages: '@radium-fs/core @radium-fs/node',
+    footer: 'MIT License · 基于 radium-fs 构建',
+    pillars: [
+      {
+        title: '确定性',
+        desc: 'kind + input = dataId。同一配方与输入总会得到同一路径的空间，无时间戳和启发式规则，完全内容寻址。',
+      },
+      {
+        title: '可组合',
+        desc: '通过 dep() 声明依赖，用符号链接在毫秒级完成上下文拼装，零拷贝，同时形成可被任意工具直接查看的物理 DAG。',
+      },
+      {
+        title: '可恢复',
+        desc: '删除任意空间后，下一次 ensure() 会按配方自动重建；依赖会级联处理，只有受影响的路径会重新构建。',
+      },
+    ],
   },
-  {
-    title: 'Resilient',
-    desc: 'Delete any space and it rebuilds from its recipe on the next ensure(). Dependencies cascade automatically. Only what changed gets rebuilt.',
-  },
-];
+};
 
-export function LandingPage() {
+interface LandingPageProps {
+  locale: Locale;
+}
+
+export function LandingPage({ locale }: LandingPageProps) {
+  const { pathname } = useLocation();
+  const copy = copyByLocale[locale];
+  const docsPath = locale === 'zh' ? '/zh/docs' : '/docs';
+  const enPath = switchPathLocale(pathname, 'en');
+  const zhPath = switchPathLocale(pathname, 'zh');
+
   return (
     <div className="min-h-screen bg-surface flex flex-col">
       {/* Header */}
       <header className="flex items-center gap-3 px-4 py-2.5 border-b border-border">
-        <Link to="/" className="flex items-center gap-2">
+        <Link to={locale === 'zh' ? '/zh' : '/'} className="flex items-center gap-2">
           <img
             src={`${import.meta.env.BASE_URL}radium-fs-logo.png`}
             alt="radium-fs"
@@ -36,20 +93,36 @@ export function LandingPage() {
 
         <div className="flex items-center gap-3 ml-2">
           <Link
-            to="/docs"
+            to={docsPath}
             className="text-xs text-text-secondary hover:text-text-primary transition-colors font-medium"
           >
-            Docs
+            {copy.navDocs}
           </Link>
           <Link
             to="/playground"
             className="text-xs text-text-secondary hover:text-text-primary transition-colors font-medium"
           >
-            Playground
+            {copy.navPlayground}
           </Link>
         </div>
 
         <div className="flex-1" />
+
+        <div className="flex items-center gap-1 text-xs text-text-secondary">
+          <Link
+            to={enPath}
+            className={`transition-colors ${locale === 'en' ? 'text-accent font-medium' : 'hover:text-text-primary'}`}
+          >
+            EN
+          </Link>
+          <span>/</span>
+          <Link
+            to={zhPath}
+            className={`transition-colors ${locale === 'zh' ? 'text-accent font-medium' : 'hover:text-text-primary'}`}
+          >
+            中文
+          </Link>
+        </div>
 
         <ThemeToggle />
 
@@ -77,8 +150,7 @@ export function LandingPage() {
           radium-fs
         </h1>
         <p className="text-base sm:text-lg text-text-secondary max-w-xl mb-10 leading-relaxed">
-          Compose complex multi-agent context spaces fast: dep() selects dependencies, input
-          hashes decide reuse.
+          {copy.subtitle}
         </p>
 
         <div className="w-full mb-10">
@@ -87,16 +159,16 @@ export function LandingPage() {
 
         <div className="flex flex-wrap items-center justify-center gap-3 mb-6">
           <Link
-            to="/docs"
+            to={docsPath}
             className="px-6 py-2.5 rounded-lg text-sm font-medium bg-accent text-surface hover:bg-accent/90 transition-colors"
           >
-            Read the Docs
+            {copy.ctaDocs}
           </Link>
           <Link
             to="/playground"
             className="px-6 py-2.5 rounded-lg text-sm font-medium border border-border text-text-primary hover:bg-surface-raised transition-colors"
           >
-            Try the Playground
+            {copy.ctaPlayground}
           </Link>
           <a
             href="https://github.com/radium-fs/radium-fs"
@@ -104,17 +176,17 @@ export function LandingPage() {
             rel="noopener noreferrer"
             className="px-6 py-2.5 rounded-lg text-sm font-medium border border-border text-text-primary hover:bg-surface-raised transition-colors"
           >
-            View on GitHub
+            {copy.ctaGithub}
           </a>
         </div>
 
-        <InstallBlock packages="@radium-fs/core @radium-fs/node" />
+        <InstallBlock packages={copy.installPackages} />
       </section>
 
       {/* Pillars */}
       <section className="px-6 py-16 border-t border-border">
         <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
-          {PILLARS.map((p) => (
+          {copy.pillars.map((p) => (
             <div key={p.title}>
               <h3 className="text-sm font-semibold text-accent mb-2 tracking-wide">
                 {p.title}
@@ -129,7 +201,7 @@ export function LandingPage() {
 
       {/* Footer */}
       <footer className="px-6 py-6 border-t border-border text-center text-xs text-text-secondary">
-        MIT License &middot; Built with radium-fs
+        {copy.footer}
       </footer>
     </div>
   );
