@@ -20,7 +20,13 @@ function spaFallback(): Plugin {
 export default defineConfig({
   base: '/radium-fs/',
   plugins: [
-    { enforce: 'pre' as const, ...mdx({ remarkPlugins: [remarkGfm, remarkFrontmatter] }) },
+    {
+      enforce: 'pre' as const,
+      ...mdx({
+        providerImportSource: '@mdx-js/react',
+        remarkPlugins: [remarkGfm, remarkFrontmatter],
+      }),
+    },
     react({ include: /\.(tsx?|mdx?)$/ }),
     tailwindcss(),
     spaFallback(),
