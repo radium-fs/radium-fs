@@ -364,7 +364,7 @@ export function DagView({ events, fullWidth }: DagViewProps) {
                   />
                   <text
                     x={pos.x + NODE_W / 2}
-                    y={pos.y + 18}
+                    y={fullWidth ? pos.y + NODE_H / 2 + 4 : pos.y + 18}
                     textAnchor="middle"
                     fill="#e2efe8"
                     fontSize={11}
@@ -372,16 +372,18 @@ export function DagView({ events, fullWidth }: DagViewProps) {
                   >
                     {node.kind}
                   </text>
-                  <text
-                    x={pos.x + NODE_W / 2}
-                    y={pos.y + 32}
-                    textAnchor="middle"
-                    fill="#6b8f7b"
-                    fontSize={8}
-                    fontFamily="var(--font-mono)"
-                  >
-                    {node.dataId.slice(0, 8)}
-                  </text>
+                  {!fullWidth && (
+                    <text
+                      x={pos.x + NODE_W / 2}
+                      y={pos.y + 32}
+                      textAnchor="middle"
+                      fill="#6b8f7b"
+                      fontSize={8}
+                      fontFamily="var(--font-mono)"
+                    >
+                      {node.dataId.slice(0, 8)}
+                    </text>
+                  )}
                 </g>
               );
             })}
@@ -414,7 +416,7 @@ export function DagView({ events, fullWidth }: DagViewProps) {
               </span>
             </div>
             <div className="text-[10px] text-text-secondary font-mono mt-1">
-              {tooltip.node.dataId}
+              {tooltip.node.dataId.slice(0, 12)}…
             </div>
           </div>
         )}
