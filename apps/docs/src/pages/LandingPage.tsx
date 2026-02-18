@@ -77,7 +77,7 @@ export function LandingPage() {
           radium-fs
         </h1>
         <p className="text-base sm:text-lg text-text-secondary max-w-xl mb-10 leading-relaxed">
-          Filesystem spaces, content-addressed, linked by symlinks.
+          Shared context spaces for multi-agent systems.
         </p>
 
         <div className="w-full mb-10">
