@@ -107,7 +107,7 @@ function reducer(state: PlaygroundState, action: Action): PlaygroundState {
   }
 }
 
-const DAG_WIDTH_DEFAULT = 280;
+const DAG_WIDTH_DEFAULT = 360;
 const DAG_WIDTH_MIN = 200;
 const DAG_WIDTH_MAX = 600;
 
