@@ -84,11 +84,11 @@ const appSpace = await store.ensure(app, {});
 |---------|-------------|
 | `@radium-fs/core` | Runtime-agnostic core engine (defineKind, createStore, types) |
 | `@radium-fs/node` | Node.js filesystem adapter (requires Node.js >= 22) |
-| `@radium-fs/memory` | In-memory filesystem adapter *(planned)* |
+| `@radium-fs/memory` | In-memory filesystem adapter (browser + Node.js) |
 
 ## Status
 
-Core engine and Node.js adapter are implemented. See `examples/node-basic/` for a runnable demo.
+Core engine, Node.js adapter, and in-memory adapter are implemented. See `examples/node-basic/` for a runnable demo.
 
 ## License
 

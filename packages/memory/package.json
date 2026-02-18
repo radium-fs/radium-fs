@@ -1,0 +1,50 @@
+{
+  "name": "@radium-fs/memory",
+  "version": "0.0.1",
+  "description": "In-memory platform adapter for radium-fs (browser + Node.js)",
+  "type": "module",
+  "main": "dist/index.mjs",
+  "types": "dist/index.d.mts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "radium-fs",
+    "filesystem",
+    "adapter",
+    "memory",
+    "in-memory",
+    "browser"
+  ],
+  "author": "wuchangming",
+  "license": "MIT",
+  "homepage": "https://github.com/radium-fs/radium-fs#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/radium-fs/radium-fs.git",
+    "directory": "packages/memory"
+  },
+  "bugs": {
+    "url": "https://github.com/radium-fs/radium-fs/issues"
+  },
+  "peerDependencies": {
+    "@radium-fs/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@radium-fs/core": "workspace:*",
+    "@types/picomatch": "^4.0.2",
+    "picomatch": "^4.0.2",
+    "tsdown": "^0.20.3",
+    "typescript": "^5.0.0"
+  }
+}
