@@ -49,15 +49,24 @@ export function Header({
 
         <div className="flex-1" />
 
-        {/* Mobile-only: compact run button */}
-        <button
-          onClick={onRun}
-          disabled={running}
-          className="md:hidden flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium bg-accent/15 text-accent hover:bg-accent/25 disabled:opacity-40 transition-colors"
-        >
-          <PlayIcon />
-          {running ? '...' : 'Run'}
-        </button>
+        {/* Mobile-only: compact run + reset */}
+        <div className="md:hidden flex items-center gap-1.5">
+          <button
+            onClick={onReset}
+            disabled={running}
+            className="px-2.5 py-1.5 rounded text-xs font-medium text-text-secondary hover:text-text-primary hover:bg-surface-raised disabled:opacity-40 transition-colors"
+          >
+            Reset
+          </button>
+          <button
+            onClick={onRun}
+            disabled={running}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium bg-accent/15 text-accent hover:bg-accent/25 disabled:opacity-40 transition-colors"
+          >
+            <PlayIcon />
+            {running ? '...' : 'Run'}
+          </button>
+        </div>
 
         <a
           href="https://github.com/radium-fs/radium-fs"
