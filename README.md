@@ -8,6 +8,10 @@
   A filesystem-level DAG caching engine for building interconnected spaces.
 </p>
 
+<p align="center">
+  <img src="docs/assets/multi-agent-context-hero.svg" alt="radium-fs multi-agent context orchestration diagram" width="1100" />
+</p>
+
 ## What is radium-fs?
 
 radium-fs manages a persistent pool of filesystem spaces. Each space is a real folder with a deterministic identity — same recipe, same input, same result. Spaces link to each other via symlinks, forming a dependency graph where nothing is duplicated and everything can be rebuilt.
