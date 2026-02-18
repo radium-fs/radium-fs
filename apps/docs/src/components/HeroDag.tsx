@@ -18,9 +18,7 @@ type NodeId =
   | 'tools-context'
   | 'planner'
   | 'coder'
-  | 'tester'
-  | 'reviewer'
-  | 'deployer';
+  | 'tester';
 
 interface Point {
   x: number;
@@ -63,14 +61,14 @@ interface NodeState {
 }
 
 const LOOP_STEPS: [Phase, number][] = [
-  ['cold-agents', 850],
-  ['cold-done', 900],
-  ['cached', 1150],
-  ['update-context', 800],
+  ['cold-agents', 780],
+  ['cold-done', 950],
+  ['cached', 1100],
+  ['update-context', 780],
   ['update-agents', 900],
   ['update-done', 1200],
   ['fade', 700],
-  ['cold-context', 180],
+  ['cold-context', 200],
 ];
 
 const COLORS = {
@@ -85,19 +83,17 @@ const COLORS = {
 };
 
 const NODE_DEFS: NodeDef[] = [
-  { id: 'repo-context', label: 'repo-context', detailDesktop: 'git: main@a8f1', detailMobile: 'git@a8f1' },
-  { id: 'task-context', label: 'task-context', detailDesktop: 'ticket: auth-v1', detailMobile: 'auth-v1' },
-  { id: 'tools-context', label: 'tools-context', detailDesktop: 'toolchain: ts+vitest', detailMobile: 'ts+vitest' },
-  { id: 'planner', label: 'Planner', detailDesktop: 'mount: repo + task', detailMobile: 'repo+task' },
-  { id: 'coder', label: 'Coder', detailDesktop: 'mount: repo + task + tools', detailMobile: 'repo+task+tools' },
-  { id: 'tester', label: 'Tester', detailDesktop: 'mount: repo + tools', detailMobile: 'repo+tools' },
-  { id: 'reviewer', label: 'Reviewer', detailDesktop: 'mount: repo + task', detailMobile: 'repo+task' },
-  { id: 'deployer', label: 'Deployer', detailDesktop: 'mount: repo + tools', detailMobile: 'repo+tools' },
+  { id: 'repo-context', label: 'repo-context', detailDesktop: 'input: repo=main', detailMobile: 'repo=main' },
+  { id: 'task-context', label: 'task-context', detailDesktop: 'input: task=auth-v1', detailMobile: 'task=auth-v1' },
+  { id: 'tools-context', label: 'tools-context', detailDesktop: 'input: tools=ts+vt', detailMobile: 'tools=ts+vt' },
+  { id: 'planner', label: 'Planner', detailDesktop: 'dep: repo+task', detailMobile: 'dep:r+t' },
+  { id: 'coder', label: 'Coder', detailDesktop: 'dep: repo+task+tools', detailMobile: 'dep:r+t+u' },
+  { id: 'tester', label: 'Tester', detailDesktop: 'dep: repo+tools', detailMobile: 'dep:r+u' },
 ];
 
 const CONTEXT_IDS: NodeId[] = ['repo-context', 'task-context', 'tools-context'];
-const AGENT_IDS: NodeId[] = ['planner', 'coder', 'tester', 'reviewer', 'deployer'];
-const UPDATED_AGENT_IDS: NodeId[] = ['planner', 'coder', 'reviewer'];
+const AGENT_IDS: NodeId[] = ['planner', 'coder', 'tester'];
+const UPDATED_AGENT_IDS: NodeId[] = ['planner', 'coder'];
 
 const EDGE_DEFS: EdgeDef[] = [
   { id: 'repo-planner', from: 'repo-context', to: 'planner' },
@@ -107,64 +103,51 @@ const EDGE_DEFS: EdgeDef[] = [
   { id: 'tools-coder', from: 'tools-context', to: 'coder' },
   { id: 'repo-tester', from: 'repo-context', to: 'tester' },
   { id: 'tools-tester', from: 'tools-context', to: 'tester' },
-  { id: 'repo-reviewer', from: 'repo-context', to: 'reviewer' },
-  { id: 'task-reviewer', from: 'task-context', to: 'reviewer' },
-  { id: 'repo-deployer', from: 'repo-context', to: 'deployer' },
-  { id: 'tools-deployer', from: 'tools-context', to: 'deployer' },
 ];
 
 const SCENE_METRICS: Record<Scene, SceneMetrics> = {
-  cold: { title: 'Cold Build', init: 8, cached: 0, rebuild: 0 },
-  cached: { title: 'All Cached', init: 0, cached: 8, rebuild: 0 },
-  updated: { title: 'Task Context Updated', init: 0, cached: 5, rebuild: 3 },
+  cold: { title: 'Cold Build', init: 6, cached: 0, rebuild: 0 },
+  cached: { title: 'All Cached', init: 0, cached: 6, rebuild: 0 },
+  updated: { title: 'Task Input Updated', init: 0, cached: 3, rebuild: 3 },
 };
 
-const PHASE_HINTS: Record<Phase, string> = {
-  'cold-context': 'Initialize shared context spaces',
-  'cold-agents': 'Fan-out to agent workspaces',
-  'cold-done': 'All spaces initialized',
-  cached: 'Same inputs, full cache hit',
-  'update-context': 'Only task-context changes',
-  'update-agents': 'Selective rebuild for dependent agents',
-  'update-done': '3 rebuilds, 5 spaces reused',
-  fade: 'Looping scenario',
+const SCENE_RULES: Record<Scene, string> = {
+  cold: 'key = hash(kind + input), first run builds all spaces.',
+  cached: 'same input => same dataId => all ensure() cached.',
+  updated: 'task input changed => new dataId => only dep(task-context) path rebuilds.',
 };
 
 const DESKTOP_LAYOUT: Layout = {
   viewW: 760,
-  viewH: 255,
-  nodeW: 132,
-  nodeH: 44,
-  labelSize: 10,
-  detailSize: 8,
+  viewH: 250,
+  nodeW: 188,
+  nodeH: 46,
+  labelSize: 11,
+  detailSize: 8.5,
   positions: {
-    planner: { x: 20, y: 16 },
-    coder: { x: 166, y: 16 },
-    tester: { x: 312, y: 16 },
-    reviewer: { x: 458, y: 16 },
-    deployer: { x: 604, y: 16 },
-    'repo-context': { x: 95, y: 152 },
-    'task-context': { x: 314, y: 152 },
-    'tools-context': { x: 533, y: 152 },
+    planner: { x: 48, y: 18 },
+    coder: { x: 286, y: 18 },
+    tester: { x: 524, y: 18 },
+    'repo-context': { x: 48, y: 156 },
+    'task-context': { x: 286, y: 156 },
+    'tools-context': { x: 524, y: 156 },
   },
 };
 
 const MOBILE_LAYOUT: Layout = {
   viewW: 392,
-  viewH: 286,
-  nodeW: 108,
-  nodeH: 40,
+  viewH: 254,
+  nodeW: 116,
+  nodeH: 42,
   labelSize: 9,
   detailSize: 7,
   positions: {
     planner: { x: 16, y: 14 },
-    coder: { x: 142, y: 14 },
-    tester: { x: 268, y: 14 },
-    reviewer: { x: 79, y: 72 },
-    deployer: { x: 205, y: 72 },
-    'repo-context': { x: 16, y: 184 },
-    'task-context': { x: 142, y: 184 },
-    'tools-context': { x: 268, y: 184 },
+    coder: { x: 138, y: 14 },
+    tester: { x: 260, y: 14 },
+    'repo-context': { x: 16, y: 146 },
+    'task-context': { x: 138, y: 146 },
+    'tools-context': { x: 260, y: 146 },
   },
 };
 
@@ -195,8 +178,6 @@ function createHiddenStates(): Record<NodeId, NodeState> {
     planner: { visible: false, status: 'hidden' },
     coder: { visible: false, status: 'hidden' },
     tester: { visible: false, status: 'hidden' },
-    reviewer: { visible: false, status: 'hidden' },
-    deployer: { visible: false, status: 'hidden' },
   };
 }
 
@@ -245,7 +226,7 @@ function buildNodeStates(phase: Phase): Record<NodeId, NodeState> {
 
 function detailForNode(node: NodeDef, phase: Phase, isMobile: boolean): string {
   if (node.id === 'task-context' && isUpdatedScene(phase)) {
-    return isMobile ? 'auth-v2' : 'ticket: auth-v2';
+    return isMobile ? 'task=auth-v2' : 'input: task=auth-v2';
   }
   return isMobile ? node.detailMobile : node.detailDesktop;
 }
@@ -330,22 +311,19 @@ export function HeroDag() {
         <span className="px-2.5 py-1 rounded border border-border bg-surface-raised text-text-primary">
           {metrics.title}
         </span>
-        <span className="px-2 py-1 rounded border border-border text-text-secondary">
-          {PHASE_HINTS[phase]}
-        </span>
         {metricBadge('init', metrics.init, COLORS.built)}
         {metricBadge('cached', metrics.cached, COLORS.cached)}
         {metricBadge('rebuild', metrics.rebuild, COLORS.building)}
-        <span className="px-2 py-1 rounded border border-border text-text-secondary">
-          work units
-        </span>
       </div>
+      <p className="mb-2 text-[11px] sm:text-xs text-text-secondary font-mono text-center">
+        {SCENE_RULES[scene]}
+      </p>
 
       <svg
         viewBox={`0 0 ${layout.viewW} ${layout.viewH}`}
         className="w-full h-auto"
         role="img"
-        aria-label="Animated multi-agent context DAG with selective rebuild"
+        aria-label="Animated context DAG showing dep-based selective rebuild"
       >
         <defs>
           <marker
@@ -444,7 +422,7 @@ export function HeroDag() {
                 />
                 <text
                   x={pos.x + 10}
-                  y={pos.y + 15}
+                  y={pos.y + 16}
                   fill={COLORS.text}
                   fontSize={layout.labelSize}
                   fontFamily="var(--font-mono)"
@@ -454,7 +432,7 @@ export function HeroDag() {
                 </text>
                 <text
                   x={pos.x + 10}
-                  y={pos.y + 30}
+                  y={pos.y + 31}
                   fill={COLORS.textDim}
                   fontSize={layout.detailSize}
                   fontFamily="var(--font-mono)"
@@ -482,7 +460,7 @@ function edgePath(from: Point, to: Point, nodeW: number, nodeH: number): string 
   const y1 = from.y;
   const x2 = to.x + nodeW / 2;
   const y2 = to.y + nodeH;
-  const c1y = y1 - 28;
+  const c1y = y1 - 32;
   const c2y = y2 + 24;
   return `M ${x1} ${y1} C ${x1} ${c1y}, ${x2} ${c2y}, ${x2} ${y2}`;
 }

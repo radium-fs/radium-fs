@@ -1,148 +1,87 @@
-<svg width="1400" height="800" viewBox="0 0 1400 800" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="radium-fs multi-agent context orchestration diagram">
+<svg width="1200" height="720" viewBox="0 0 1200 720" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="radium-fs quickly composes complex multi-agent context graphs">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1400" y2="800" gradientUnits="userSpaceOnUse">
+    <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="720" gradientUnits="userSpaceOnUse">
       <stop offset="0" stop-color="#07120D" />
-      <stop offset="1" stop-color="#0E1E16" />
+      <stop offset="1" stop-color="#0D1F16" />
     </linearGradient>
-    <linearGradient id="card" x1="0" y1="0" x2="250" y2="120" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#0E2018" />
-      <stop offset="1" stop-color="#10271D" />
+    <linearGradient id="panel" x1="0" y1="0" x2="360" y2="560" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0F2118" />
+      <stop offset="1" stop-color="#0E1C15" />
     </linearGradient>
-    <linearGradient id="cardContext" x1="0" y1="0" x2="250" y2="120" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#0A1C2A" />
-      <stop offset="1" stop-color="#102631" />
+    <linearGradient id="card" x1="0" y1="0" x2="280" y2="90" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#10261B" />
+      <stop offset="1" stop-color="#112B1E" />
     </linearGradient>
-    <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%" filterUnits="objectBoundingBox">
-      <feGaussianBlur stdDeviation="4" result="blur" />
-      <feMerge>
-        <feMergeNode in="blur" />
-        <feMergeNode in="SourceGraphic" />
-      </feMerge>
-    </filter>
-    <marker id="arrowGreen" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="8" markerHeight="6" orient="auto-start-reverse">
+    <marker id="arrow" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="8" markerHeight="6" orient="auto-start-reverse">
       <path d="M 0 0 L 10 3.5 L 0 7 z" fill="#5EEA99" />
-    </marker>
-    <marker id="arrowAmber" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="8" markerHeight="6" orient="auto-start-reverse">
-      <path d="M 0 0 L 10 3.5 L 0 7 z" fill="#F6C456" />
     </marker>
   </defs>
 
-  <rect x="0" y="0" width="1400" height="800" rx="24" fill="url(#bg)" />
-  <rect x="18" y="18" width="1364" height="764" rx="18" stroke="#1F3D2E" />
+  <rect x="0" y="0" width="1200" height="720" rx="22" fill="url(#bg)" />
+  <rect x="14" y="14" width="1172" height="692" rx="16" stroke="#1F3D2E" />
 
-  <text x="700" y="84" fill="#E6F7EC" text-anchor="middle" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif" font-size="44" font-weight="700">
-    radium-fs for Multi-Agent Context Orchestration
+  <text x="600" y="70" text-anchor="middle" fill="#E6F7EC" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif" font-size="40" font-weight="700">
+    Build Complex Agent Contexts Fast
   </text>
-  <text x="700" y="122" fill="#9CC6AF" text-anchor="middle" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif" font-size="22" font-weight="500">
-    Task Context Updated: rebuild only dependents, reuse everything else
+  <text x="600" y="104" text-anchor="middle" fill="#9CC6AF" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif" font-size="20" font-weight="500">
+    dep() wires shared spaces into each agent workspace in milliseconds
   </text>
 
-  <g transform="translate(372 148)">
-    <rect x="0" y="0" width="656" height="46" rx="12" fill="#0F221A" stroke="#2B5A42" />
-    <text x="18" y="30" fill="#D9F5E3" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="16" font-weight="600">work units</text>
+  <rect x="44" y="140" width="336" height="430" rx="14" fill="url(#panel)" stroke="#2B5A42" />
+  <text x="64" y="172" fill="#CDEEDD" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="17" font-weight="600">Shared Context Spaces</text>
 
-    <g transform="translate(132 8)">
-      <rect x="0" y="0" width="120" height="30" rx="8" fill="#112C20" stroke="#2E6A4A" />
-      <circle cx="16" cy="15" r="4" fill="#69EBA3" />
-      <text x="28" y="20" fill="#C9F5DB" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">init 0</text>
-    </g>
+  <rect x="62" y="196" width="300" height="72" rx="10" fill="url(#card)" stroke="#49C782" />
+  <rect x="62" y="196" width="5" height="72" rx="2" fill="#49C782" />
+  <text x="78" y="226" fill="#E5F6EC" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="24" font-weight="700">repo-context</text>
+  <text x="78" y="249" fill="#8FB7A2" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">source tree, symbols, ownership</text>
 
-    <g transform="translate(264 8)">
-      <rect x="0" y="0" width="140" height="30" rx="8" fill="#0E2A3D" stroke="#2A5A75" />
-      <circle cx="16" cy="15" r="4" fill="#8EC3FF" />
-      <text x="28" y="20" fill="#CFE8FF" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">cached 5</text>
-    </g>
+  <rect x="62" y="282" width="300" height="72" rx="10" fill="url(#card)" stroke="#49C782" />
+  <rect x="62" y="282" width="5" height="72" rx="2" fill="#49C782" />
+  <text x="78" y="312" fill="#E5F6EC" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="24" font-weight="700">task-context</text>
+  <text x="78" y="335" fill="#8FB7A2" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">ticket goals, constraints, scope</text>
 
-    <g transform="translate(416 8)">
-      <rect x="0" y="0" width="146" height="30" rx="8" fill="#2B2411" stroke="#6D5A25" />
-      <circle cx="16" cy="15" r="4" fill="#F6C456" />
-      <text x="28" y="20" fill="#FFE6A7" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">rebuild 3</text>
-    </g>
-  </g>
+  <rect x="62" y="368" width="300" height="72" rx="10" fill="url(#card)" stroke="#49C782" />
+  <rect x="62" y="368" width="5" height="72" rx="2" fill="#49C782" />
+  <text x="78" y="398" fill="#E5F6EC" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="24" font-weight="700">tools-context</text>
+  <text x="78" y="421" fill="#8FB7A2" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">linters, tests, build contracts</text>
 
-  <path d="M295 540 C295 450, 170 380, 170 332" stroke="#5EEA99" stroke-width="2.2" stroke-dasharray="6 5" fill="none" marker-end="url(#arrowGreen)" opacity="0.7"/>
-  <path d="M295 540 C295 450, 430 380, 430 332" stroke="#5EEA99" stroke-width="2.2" stroke-dasharray="6 5" fill="none" marker-end="url(#arrowGreen)" opacity="0.7"/>
-  <path d="M295 540 C295 450, 690 380, 690 332" stroke="#5EEA99" stroke-width="2.2" stroke-dasharray="6 5" fill="none" marker-end="url(#arrowGreen)" opacity="0.55"/>
-  <path d="M295 540 C295 450, 950 380, 950 332" stroke="#5EEA99" stroke-width="2.2" stroke-dasharray="6 5" fill="none" marker-end="url(#arrowGreen)" opacity="0.7"/>
-  <path d="M295 540 C295 450, 1210 380, 1210 332" stroke="#5EEA99" stroke-width="2.2" stroke-dasharray="6 5" fill="none" marker-end="url(#arrowGreen)" opacity="0.55"/>
+  <rect x="62" y="454" width="300" height="72" rx="10" fill="url(#card)" stroke="#49C782" />
+  <rect x="62" y="454" width="5" height="72" rx="2" fill="#49C782" />
+  <text x="78" y="484" fill="#E5F6EC" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="24" font-weight="700">knowledge-context</text>
+  <text x="78" y="507" fill="#8FB7A2" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">patterns, decisions, policies</text>
 
-  <path d="M700 540 C700 448, 170 380, 170 332" stroke="#F6C456" stroke-width="2.8" stroke-dasharray="6 5" fill="none" marker-end="url(#arrowAmber)" filter="url(#softGlow)"/>
-  <path d="M700 540 C700 448, 430 380, 430 332" stroke="#F6C456" stroke-width="2.8" stroke-dasharray="6 5" fill="none" marker-end="url(#arrowAmber)" filter="url(#softGlow)"/>
-  <path d="M700 540 C700 448, 950 380, 950 332" stroke="#F6C456" stroke-width="2.8" stroke-dasharray="6 5" fill="none" marker-end="url(#arrowAmber)" filter="url(#softGlow)"/>
+  <text x="420" y="136" fill="#A6DCC0" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">dep selection per agent</text>
 
-  <path d="M1105 540 C1105 450, 430 380, 430 332" stroke="#5EEA99" stroke-width="2.2" stroke-dasharray="6 5" fill="none" marker-end="url(#arrowGreen)" opacity="0.55"/>
-  <path d="M1105 540 C1105 450, 690 380, 690 332" stroke="#5EEA99" stroke-width="2.2" stroke-dasharray="6 5" fill="none" marker-end="url(#arrowGreen)" opacity="0.7"/>
-  <path d="M1105 540 C1105 450, 1210 380, 1210 332" stroke="#5EEA99" stroke-width="2.2" stroke-dasharray="6 5" fill="none" marker-end="url(#arrowGreen)" opacity="0.7"/>
+  <path d="M362 232 C430 232, 448 190, 520 190" stroke="#5EEA99" stroke-width="2.2" stroke-dasharray="6 5" fill="none" marker-end="url(#arrow)"/>
+  <path d="M362 318 C430 318, 448 204, 520 204" stroke="#5EEA99" stroke-width="2.2" stroke-dasharray="6 5" fill="none" marker-end="url(#arrow)"/>
 
-  <g>
-    <rect x="60" y="250" width="220" height="86" rx="12" fill="url(#card)" stroke="#F6C456" stroke-width="2" />
-    <rect x="60" y="250" width="5" height="86" rx="2" fill="#F6C456" />
-    <text x="76" y="282" fill="#E5F6EC" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="22" font-weight="700">Planner</text>
-    <text x="76" y="309" fill="#97B8A7" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">mount: repo + task</text>
-    <circle cx="258" cy="293" r="6" fill="#F6C456" />
-  </g>
+  <path d="M362 232 C430 232, 448 290, 520 290" stroke="#5EEA99" stroke-width="2.2" stroke-dasharray="6 5" fill="none" marker-end="url(#arrow)"/>
+  <path d="M362 318 C430 318, 448 304, 520 304" stroke="#5EEA99" stroke-width="2.2" stroke-dasharray="6 5" fill="none" marker-end="url(#arrow)"/>
+  <path d="M362 404 C430 404, 448 318, 520 318" stroke="#5EEA99" stroke-width="2.2" stroke-dasharray="6 5" fill="none" marker-end="url(#arrow)"/>
 
-  <g>
-    <rect x="320" y="250" width="220" height="86" rx="12" fill="url(#card)" stroke="#F6C456" stroke-width="2" />
-    <rect x="320" y="250" width="5" height="86" rx="2" fill="#F6C456" />
-    <text x="336" y="282" fill="#E5F6EC" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="22" font-weight="700">Coder</text>
-    <text x="336" y="309" fill="#97B8A7" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">mount: repo + task + tools</text>
-    <circle cx="518" cy="293" r="6" fill="#F6C456" />
-  </g>
+  <path d="M362 232 C430 232, 448 390, 520 390" stroke="#5EEA99" stroke-width="2.2" stroke-dasharray="6 5" fill="none" marker-end="url(#arrow)"/>
+  <path d="M362 404 C430 404, 448 404, 520 404" stroke="#5EEA99" stroke-width="2.2" stroke-dasharray="6 5" fill="none" marker-end="url(#arrow)"/>
+  <path d="M362 490 C430 490, 448 418, 520 418" stroke="#5EEA99" stroke-width="2.2" stroke-dasharray="6 5" fill="none" marker-end="url(#arrow)"/>
 
-  <g>
-    <rect x="580" y="250" width="220" height="86" rx="12" fill="url(#card)" stroke="#5EEA99" stroke-width="2" />
-    <rect x="580" y="250" width="5" height="86" rx="2" fill="#8EC3FF" />
-    <text x="596" y="282" fill="#E5F6EC" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="22" font-weight="700">Tester</text>
-    <text x="596" y="309" fill="#97B8A7" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">mount: repo + tools</text>
-    <circle cx="778" cy="293" r="6" fill="#8EC3FF" />
-  </g>
+  <rect x="520" y="156" width="636" height="414" rx="14" fill="url(#panel)" stroke="#2B5A42" />
+  <text x="540" y="188" fill="#CDEEDD" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="17" font-weight="600">Agent Workspaces (composed via dep)</text>
 
-  <g>
-    <rect x="840" y="250" width="220" height="86" rx="12" fill="url(#card)" stroke="#F6C456" stroke-width="2" />
-    <rect x="840" y="250" width="5" height="86" rx="2" fill="#F6C456" />
-    <text x="856" y="282" fill="#E5F6EC" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="22" font-weight="700">Reviewer</text>
-    <text x="856" y="309" fill="#97B8A7" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">mount: repo + task</text>
-    <circle cx="1038" cy="293" r="6" fill="#F6C456" />
-  </g>
+  <rect x="542" y="212" width="592" height="88" rx="12" fill="url(#card)" stroke="#49C782" />
+  <rect x="542" y="212" width="5" height="88" rx="2" fill="#49C782" />
+  <text x="560" y="246" fill="#E5F6EC" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="29" font-weight="700">Planner Workspace</text>
+  <text x="560" y="275" fill="#8FB7A2" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="15">dep: repo-context + task-context</text>
 
-  <g>
-    <rect x="1100" y="250" width="220" height="86" rx="12" fill="url(#card)" stroke="#5EEA99" stroke-width="2" />
-    <rect x="1100" y="250" width="5" height="86" rx="2" fill="#8EC3FF" />
-    <text x="1116" y="282" fill="#E5F6EC" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="22" font-weight="700">Deployer</text>
-    <text x="1116" y="309" fill="#97B8A7" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">mount: repo + tools</text>
-    <circle cx="1298" cy="293" r="6" fill="#8EC3FF" />
-  </g>
+  <rect x="542" y="312" width="592" height="88" rx="12" fill="url(#card)" stroke="#49C782" />
+  <rect x="542" y="312" width="5" height="88" rx="2" fill="#49C782" />
+  <text x="560" y="346" fill="#E5F6EC" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="29" font-weight="700">Coder Workspace</text>
+  <text x="560" y="375" fill="#8FB7A2" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="15">dep: repo-context + task-context + tools-context</text>
 
-  <g>
-    <rect x="170" y="540" width="250" height="96" rx="12" fill="url(#cardContext)" stroke="#5EEA99" stroke-width="2" />
-    <rect x="170" y="540" width="5" height="96" rx="2" fill="#8EC3FF" />
-    <text x="188" y="574" fill="#DDF4FF" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="24" font-weight="700">repo-context</text>
-    <text x="188" y="606" fill="#95B5C8" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">git: main@a8f1 (cached)</text>
-    <circle cx="398" cy="588" r="6" fill="#8EC3FF" />
-  </g>
+  <rect x="542" y="412" width="592" height="88" rx="12" fill="url(#card)" stroke="#49C782" />
+  <rect x="542" y="412" width="5" height="88" rx="2" fill="#49C782" />
+  <text x="560" y="446" fill="#E5F6EC" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="29" font-weight="700">Reviewer Workspace</text>
+  <text x="560" y="475" fill="#8FB7A2" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="15">dep: repo-context + tools-context + knowledge-context</text>
 
-  <g>
-    <rect x="575" y="540" width="250" height="96" rx="12" fill="url(#cardContext)" stroke="#F6C456" stroke-width="2" />
-    <rect x="575" y="540" width="5" height="96" rx="2" fill="#F6C456" />
-    <text x="593" y="574" fill="#DDF4FF" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="24" font-weight="700">task-context</text>
-    <text x="593" y="606" fill="#95B5C8" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">ticket: auth-v2 (rebuilt)</text>
-    <circle cx="803" cy="588" r="6" fill="#F6C456" />
-  </g>
-
-  <g>
-    <rect x="980" y="540" width="250" height="96" rx="12" fill="url(#cardContext)" stroke="#5EEA99" stroke-width="2" />
-    <rect x="980" y="540" width="5" height="96" rx="2" fill="#8EC3FF" />
-    <text x="998" y="574" fill="#DDF4FF" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="24" font-weight="700">tools-context</text>
-    <text x="998" y="606" fill="#95B5C8" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">ts + vitest (cached)</text>
-    <circle cx="1208" cy="588" r="6" fill="#8EC3FF" />
-  </g>
-
-  <g transform="translate(72 694)">
-    <rect x="0" y="0" width="1256" height="52" rx="12" fill="#0E1D16" stroke="#244434" />
-    <circle cx="22" cy="26" r="5" fill="#F6C456" />
-    <text x="36" y="31" fill="#EED9A5" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="15">rebuilt because they mount task-context</text>
-    <circle cx="520" cy="26" r="5" fill="#8EC3FF" />
-    <text x="534" y="31" fill="#B9DDFC" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="15">cached and reused directly from canonical spaces</text>
-  </g>
+  <rect x="44" y="596" width="1112" height="84" rx="14" fill="#0E1D16" stroke="#244434" />
+  <text x="68" y="628" fill="#D4F1E1" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="16">Why this matters:</text>
+  <text x="68" y="652" fill="#9AC8B2" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="15">1) shared contexts build once  2) each agent links only what it needs  3) complex context graphs stay inspectable</text>
 </svg>
