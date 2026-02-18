@@ -16,7 +16,9 @@
   ],
   "scripts": {
     "build": "tsdown",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "keywords": ["radium-fs", "filesystem", "space", "dag", "cache"],
   "author": "wuchangming",
@@ -31,6 +33,7 @@
     "url": "https://github.com/radium-fs/radium-fs/issues"
   },
   "devDependencies": {
+    "@radium-fs/memory": "workspace:*",
     "tsdown": "^0.20.3",
     "typescript": "^5.0.0"
   }
