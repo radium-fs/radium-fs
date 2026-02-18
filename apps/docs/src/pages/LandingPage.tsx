@@ -77,7 +77,8 @@ export function LandingPage() {
           radium-fs
         </h1>
         <p className="text-base sm:text-lg text-text-secondary max-w-xl mb-10 leading-relaxed">
-          Dependency-driven context spaces with deterministic input hashes.
+          Compose complex multi-agent context spaces fast: dep() selects dependencies, input
+          hashes decide reuse.
         </p>
 
         <div className="w-full mb-10">

@@ -34,15 +34,23 @@ export const diagrams: Record<string, DiagramDef> = {
 
   'intro-overview': {
     nodes: [
-      { id: 'config', label: 'config', status: 'built', detail: 'env: "prod"' },
-      { id: 'lib', label: 'lib', status: 'built', detail: 'name: "utils"' },
-      { id: 'app', label: 'app', status: 'built' },
+      { id: 'repo-context', label: 'repo-context', status: 'built', detail: 'repo: "main"' },
+      { id: 'task-context', label: 'task-context', status: 'built', detail: 'task: "auth-v2"' },
+      { id: 'tools-context', label: 'tools-context', status: 'built', detail: 'stack: "ts+vt"' },
+      { id: 'planner', label: 'planner', status: 'built', detail: 'dep: repo+task' },
+      { id: 'coder', label: 'coder', status: 'built', detail: 'dep: repo+task+tools' },
+      { id: 'tester', label: 'tester', status: 'built', detail: 'dep: repo+tools' },
     ],
     edges: [
-      { from: 'config', to: 'app', label: 'dep("config")' },
-      { from: 'lib', to: 'app', label: 'dep("lib")' },
+      { from: 'repo-context', to: 'planner', label: 'dep("repo")' },
+      { from: 'task-context', to: 'planner', label: 'dep("task")' },
+      { from: 'repo-context', to: 'coder', label: 'dep("repo")' },
+      { from: 'task-context', to: 'coder', label: 'dep("task")' },
+      { from: 'tools-context', to: 'coder', label: 'dep("tools")' },
+      { from: 'repo-context', to: 'tester', label: 'dep("repo")' },
+      { from: 'tools-context', to: 'tester', label: 'dep("tools")' },
     ],
-    caption: 'Spaces form a DAG — linked by symlinks, cached by content address',
+    caption: 'Multi-agent context DAG: dep() wires only required context per agent',
   },
 
   'dep-chain-full': {

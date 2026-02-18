@@ -3,7 +3,16 @@ import { DagDiagram } from '../../components/DagDiagram';
 
 # Dependencies
 
-Spaces can depend on other spaces. When space A calls `space.dep('name', kind, input)` inside its `onInit`, radium-fs ensures the dependency space exists and creates a **symlink** from `A/name/` to the dependency's exports.
+Spaces can depend on other spaces. When space A calls `space.dep('name', kind, input)` inside `onInit`, radium-fs ensures the dependency exists and creates a **symlink** from `A/name/` to the dependency exports.
+
+In multi-agent setups, this is how each agent mounts only the context it needs.
+
+## dep() vs input hash
+
+- `dep()` defines dependency edges: who mounts which context.
+- `kind + input` defines `dataId`: whether `ensure()` reuses or rebuilds a space.
+
+Only spaces whose own input changes will rebuild. If an input change affects one dependency path, unrelated dependency paths stay reusable.
 
 ## How dep() Works
 
@@ -29,6 +38,45 @@ Under the hood, `dep()`:
 Symlinks are near-instant and take zero disk space. Unlike copying, a dependency always points to the canonical location of the data — one source of truth.
 </Callout>
 
+## Multi-agent Context Composition
+
+```typescript
+const planner = defineKind({
+  kind: 'planner',
+  async onInit({ input, space }) {
+    await space.dep('repo', repoContext, { repo: input.repo });
+    await space.dep('task', taskContext, { task: input.task });
+  },
+});
+
+const coder = defineKind({
+  kind: 'coder',
+  async onInit({ input, space }) {
+    await space.dep('repo', repoContext, { repo: input.repo });
+    await space.dep('task', taskContext, { task: input.task });
+    await space.dep('tools', toolsContext, { stack: input.stack });
+  },
+});
+
+const tester = defineKind({
+  kind: 'tester',
+  async onInit({ input, space }) {
+    await space.dep('repo', repoContext, { repo: input.repo });
+    await space.dep('tools', toolsContext, { stack: input.stack });
+  },
+});
+```
+
+`task` update example (`auth-v1 -> auth-v2`):
+
+| Space | dep set | Result |
+|---|---|---|
+| `planner` | `repo + task` | rebuild |
+| `coder` | `repo + task + tools` | rebuild |
+| `tester` | `repo + tools` | cached |
+
+This is the core pattern: **selective mounting by dep set, selective rebuild by input change**.
+
 ## Full Build
 
 When you ensure `app` for the first time, its `onInit` fires and calls `dep()` for both `config` and `lib`. Each dependency is ensured first, building the graph bottom-up:
@@ -39,11 +87,11 @@ The event log shows the full build order: `config` and `lib` are initialized bef
 
 ## Partial Rebuild
 
-Change the `env` input from `"prod"` to `"dev"`. This changes `config`'s input (and therefore `app`'s), but `lib` is unchanged — it stays cached:
+Change the `env` input from `"prod"` to `"dev"`. This changes `config`'s input (and therefore `app`'s input path), but `lib` is unchanged — it stays cached:
 
 <DagDiagram preset="dep-chain-partial" />
 
-This is the power of content-addressed dependency graphs — only what changed gets rebuilt.
+This is the power of dependency-driven context composition: build only the affected path and reuse everything else.
 
 ## Dependency Graph
 
@@ -59,4 +107,4 @@ app/
 
 ## Next
 
-Learn how [Caching](/docs/concepts/caching) works at a deeper level.
+Learn how [Caching](/docs/concepts/caching) maps `kind + input` to `dataId` and cache hits.

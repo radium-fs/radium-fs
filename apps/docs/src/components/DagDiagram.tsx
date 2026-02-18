@@ -66,6 +66,7 @@ export function DagDiagram({ preset, diagram, className }: DagDiagramProps) {
   }
 
   const { nodes, edges = [], caption } = def;
+  const showEdgeLabels = edges.length <= 4;
 
   const { positions, svgW, svgH } = useMemo(
     () => layout(nodes, edges),
@@ -122,7 +123,7 @@ export function DagDiagram({ preset, diagram, className }: DagDiagramProps) {
                   strokeDasharray="4 3"
                   markerEnd="url(#dag-arrow)"
                 />
-                {edge.label && (
+                {showEdgeLabels && edge.label && (
                   <text
                     x={(x1 + x2) / 2 + (x1 === x2 ? 0 : x1 < x2 ? 10 : -10)}
                     y={midY}

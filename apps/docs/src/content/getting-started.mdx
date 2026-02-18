@@ -2,7 +2,7 @@ import { DagDiagram } from '../components/DagDiagram';
 
 # Quick Start
 
-Get a space running in three steps.
+Get your first context space running in three steps.
 
 ## 1. Define a Kind
 
@@ -55,8 +55,14 @@ const same = await store.ensure(Greeter, { message: 'world' });
 
 Same `kind + input` always resolves to the same space — this is content-addressing at work.
 
+For multi-agent workflows, keep this mental model:
+
+- Use `dep()` to choose which context each space mounts.
+- Use `input` fields to control when each mounted path should reuse or rebuild.
+
 ## What's Next?
 
-- Learn about [Space & Kind](/docs/concepts/space-and-kind) in depth
-- See how spaces link to each other via [Dependencies](/docs/concepts/dependencies)
+- Model selective agent context wiring in [Dependencies](/docs/concepts/dependencies)
+- Learn the data model in [Space & Kind](/docs/concepts/space-and-kind)
+- Understand `dataId` reuse in [Caching](/docs/concepts/caching)
 - Explore the [Playground](/playground) for a free-form experience

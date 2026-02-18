@@ -20,8 +20,8 @@ export const navigation: NavSection[] = [
     title: 'Core Concepts',
     items: [
       { title: 'Space & Kind', href: '/docs/concepts/space-and-kind' },
-      { title: 'Store & ensure()', href: '/docs/concepts/store-and-ensure' },
       { title: 'Dependencies', href: '/docs/concepts/dependencies' },
+      { title: 'Store & ensure()', href: '/docs/concepts/store-and-ensure' },
       { title: 'Caching', href: '/docs/concepts/caching' },
       { title: 'Commands', href: '/docs/concepts/commands' },
     ],

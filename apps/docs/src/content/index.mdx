@@ -2,21 +2,29 @@ import { DagDiagram } from '../components/DagDiagram';
 
 # Introduction
 
-**radium-fs** is a filesystem-level DAG caching engine for building interconnected spaces.
+**radium-fs** is a filesystem-level context composition engine for multi-agent systems.
 
-It manages a persistent pool of filesystem spaces. Each space is a real folder with a deterministic identity — same recipe, same input, same result. Spaces link to each other via symlinks, forming a dependency graph where nothing is duplicated and everything can be rebuilt.
+It manages a persistent pool of filesystem spaces. Each space is a real folder with a deterministic identity. `dep()` links spaces with symlinks, so agents mount only the context they need and compose complex workspaces without copying.
 
 <DagDiagram preset="intro-overview" />
 
+## Two Rules to Remember
+
+1. **Topology comes from `dep()`** — dependencies decide which context is mounted into each space.
+2. **Reuse comes from `kind + input`** — same input yields the same `dataId`, so `ensure()` hits immediately.
+
+If `task-context` input changes, only spaces whose input path includes `task-context` rebuild. Unrelated spaces stay reusable.
+
 ## Why radium-fs?
 
-Complex multi-agent systems need to share, compose, and reuse filesystem artifacts at scale. radium-fs gives them a shared infrastructure layer where spaces are created once, cached forever, linked instantly, and rebuilt on demand.
+Complex multi-agent systems need fast context composition, not repeated context copying. radium-fs gives you a shared context layer where dependency wiring is explicit, rebuild scope is deterministic, and every node is inspectable on disk.
 
 ## Key Properties
 
 - **Deterministic** — `kind + input → dataId`. Same input always produces the same space at the same path.
-- **Composable** — Spaces declare dependencies via `dep()`. Symlinks wire them together in milliseconds, no copying.
-- **Resilient** — Delete any space, it rebuilds from its recipe. Dependencies rebuild recursively.
+- **Composable** — `dep()` declares per-space dependency sets. Symlinks wire mounts in milliseconds, with zero copies.
+- **Selective** — Input changes rebuild only affected dependency paths. Unrelated spaces remain reusable.
+- **Resilient** — Delete any space and it is rebuilt from its recipe on the next `ensure()`.
 - **Physical** — Every space is a real directory. Use grep, find, rg, or any tool you already have.
 - **Runtime-agnostic** — Core has zero platform dependencies. Runs anywhere JavaScript runs.
 
@@ -30,4 +38,4 @@ Complex multi-agent systems need to share, compose, and reuse filesystem artifac
 
 ## Next Steps
 
-Head to the [Quick Start](/docs/getting-started) to build your first space in under a minute, or dive into [Core Concepts](/docs/concepts/space-and-kind) for the full picture.
+Head to the [Quick Start](/docs/getting-started) to build your first space, then read [Dependencies](/docs/concepts/dependencies) to model multi-agent context wiring.
