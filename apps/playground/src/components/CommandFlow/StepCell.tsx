@@ -1,8 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import type { StepState } from '../../engine/types';
 import { highlight, getHighlighter } from '../../lib/highlighter';
 import { StatusBadge } from './StatusBadge';
 import { FileTree } from './FileTree';
+
+const CODE_COLLAPSE_THRESHOLD = 5;
 
 interface StepCellProps {
   stepState: StepState;
@@ -14,6 +16,12 @@ export function StepCell({ stepState, index, onFileClick }: StepCellProps) {
   const { step, status, result } = stepState;
   const [codeHtml, setCodeHtml] = useState<string>('');
   const [treeOpen, setTreeOpen] = useState(true);
+
+  const isLongCode = useMemo(
+    () => step.code.split('\n').length > CODE_COLLAPSE_THRESHOLD,
+    [step.code],
+  );
+  const [codeOpen, setCodeOpen] = useState(!isLongCode);
 
   useEffect(() => {
     let cancelled = false;
@@ -38,12 +46,29 @@ export function StepCell({ stepState, index, onFileClick }: StepCellProps) {
         <StatusBadge status={status} durationMs={result?.durationMs} />
       </div>
 
-      {/* Code block */}
-      <div className="bg-surface-code px-3 md:px-4 py-2.5 md:py-3 overflow-x-auto">
-        {codeHtml ? (
-          <div dangerouslySetInnerHTML={{ __html: codeHtml }} />
-        ) : (
-          <pre className="text-xs font-mono text-text-primary">{step.code}</pre>
+      {/* Code block (collapsible for long snippets) */}
+      <div className="bg-surface-code relative">
+        <div
+          className={`px-3 md:px-4 py-2.5 md:py-3 overflow-x-auto transition-[max-height] duration-200 ${
+            !codeOpen && isLongCode ? 'max-h-[84px] overflow-hidden' : ''
+          }`}
+        >
+          {codeHtml ? (
+            <div dangerouslySetInnerHTML={{ __html: codeHtml }} />
+          ) : (
+            <pre className="text-xs font-mono text-text-primary">{step.code}</pre>
+          )}
+        </div>
+        {isLongCode && !codeOpen && (
+          <div className="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-surface-code to-transparent pointer-events-none" />
+        )}
+        {isLongCode && (
+          <button
+            onClick={() => setCodeOpen(!codeOpen)}
+            className="relative w-full py-1.5 text-[11px] text-text-secondary hover:text-accent transition-colors bg-surface-code border-t border-border/50"
+          >
+            {codeOpen ? '▴ Collapse' : '▾ Show code'}
+          </button>
         )}
       </div>
 
