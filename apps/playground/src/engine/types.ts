@@ -54,10 +54,13 @@ export interface StepState {
   result: StepResult | null;
 }
 
+export type MobileTab = 'steps' | 'graph' | 'events';
+
 export interface PlaygroundState {
   scenario: Scenario;
   steps: StepState[];
   events: RfsEvent[];
   inspectedFile: { path: string; content: string } | null;
   running: boolean;
+  activeTab: MobileTab;
 }

@@ -1,8 +1,9 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useCallback, useRef } from 'react';
 import type { RfsEvent } from '@radium-fs/core';
 
 interface DagViewProps {
   events: RfsEvent[];
+  fullWidth?: boolean;
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -12,6 +13,12 @@ const STATUS_COLORS: Record<string, string> = {
   error: '#ef4444',
 };
 
+const STATUS_LABELS: Record<string, string> = {
+  built: 'Built',
+  cached: 'Cached',
+  error: 'Error',
+};
+
 interface DagNode {
   dataId: string;
   kind: string;
@@ -19,17 +26,10 @@ interface DagNode {
 }
 
 interface DagEdge {
-  from: string; // dependant (parent)
-  to: string; // dependency (child)
+  from: string;
+  to: string;
 }
 
-/**
- * Build the space graph from raw events using a stack-based approach.
- *
- * When init:start fires while another init is already on the stack,
- * the outer space depends on the inner one. init:cached also indicates
- * a dependency when it fires within a parent's init lifecycle.
- */
 function buildGraph(events: RfsEvent[]): { nodes: DagNode[]; edges: DagEdge[] } {
   const nodeMap = new Map<string, DagNode>();
   const edgeSet = new Set<string>();
@@ -88,9 +88,6 @@ function buildGraph(events: RfsEvent[]): { nodes: DagNode[]; edges: DagEdge[] } 
   return { nodes: [...nodeMap.values()], edges };
 }
 
-/**
- * Assign depth levels: leaf dependencies at level 0, dependants at higher levels.
- */
 function assignLevels(nodes: DagNode[], edges: DagEdge[]): DagNode[][] {
   const depsOf = new Map<string, Set<string>>();
   for (const e of edges) {
@@ -138,28 +135,115 @@ const NODE_H = 44;
 const GAP_X = 14;
 const GAP_Y = 40;
 const PAD = 16;
+const ZOOM_STEP = 0.15;
+const MIN_ZOOM = 0.5;
+const MAX_ZOOM = 2.5;
 
-export function DagView({ events }: DagViewProps) {
+function EmptyState() {
+  return (
+    <div className="flex-1 flex flex-col items-center justify-center p-6 gap-4">
+      <svg className="w-16 h-16 text-border" fill="none" viewBox="0 0 64 64" stroke="currentColor" strokeWidth="1.2">
+        <circle cx="20" cy="16" r="8" />
+        <circle cx="44" cy="16" r="8" />
+        <circle cx="32" cy="44" r="8" />
+        <line x1="24" y1="22" x2="30" y2="38" />
+        <line x1="40" y1="22" x2="34" y2="38" />
+      </svg>
+      <p className="text-xs text-text-secondary text-center leading-relaxed">
+        Run the scenario to see the
+        <br />
+        dependency graph here
+      </p>
+    </div>
+  );
+}
+
+function Legend() {
+  const items = [
+    { status: 'built', label: 'Built' },
+    { status: 'cached', label: 'Cached' },
+    { status: 'error', label: 'Error' },
+  ];
+
+  return (
+    <div className="flex items-center gap-3 px-4 py-2 border-b border-border">
+      {items.map(({ status, label }) => (
+        <span key={status} className="flex items-center gap-1.5">
+          <span
+            className="w-2 h-2 rounded-full"
+            style={{ backgroundColor: STATUS_COLORS[status] }}
+          />
+          <span className="text-[10px] text-text-secondary">{label}</span>
+        </span>
+      ))}
+    </div>
+  );
+}
+
+interface TooltipData {
+  node: DagNode;
+  x: number;
+  y: number;
+}
+
+export function DagView({ events, fullWidth }: DagViewProps) {
   const { nodes, edges, levels } = useMemo(() => {
     const g = buildGraph(events);
     return { ...g, levels: assignLevels(g.nodes, g.edges) };
   }, [events]);
 
+  const [zoom, setZoom] = useState(1);
+  const [tooltip, setTooltip] = useState<TooltipData | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const handleZoomIn = useCallback(() => {
+    setZoom((z) => Math.min(MAX_ZOOM, z + ZOOM_STEP));
+  }, []);
+
+  const handleZoomOut = useCallback(() => {
+    setZoom((z) => Math.max(MIN_ZOOM, z - ZOOM_STEP));
+  }, []);
+
+  const handleWheel = useCallback((e: React.WheelEvent) => {
+    if (e.ctrlKey || e.metaKey) {
+      e.preventDefault();
+      setZoom((z) => {
+        const delta = e.deltaY > 0 ? -ZOOM_STEP : ZOOM_STEP;
+        return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, z + delta));
+      });
+    }
+  }, []);
+
+  const handleNodeEnter = useCallback(
+    (node: DagNode, e: React.MouseEvent) => {
+      const rect = containerRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      setTooltip({
+        node,
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top - 8,
+      });
+    },
+    [],
+  );
+
+  const handleNodeLeave = useCallback(() => {
+    setTooltip(null);
+  }, []);
+
+  const outerClassName = fullWidth
+    ? 'h-full bg-surface-raised flex flex-col'
+    : 'h-full border-l border-border bg-surface-raised flex flex-col';
+
   if (nodes.length === 0) {
     return (
-      <aside className="h-full border-l border-border bg-surface-raised flex flex-col">
+      <aside className={outerClassName}>
         <div className="px-4 py-3 border-b border-border">
           <h2 className="text-xs font-medium text-text-secondary uppercase tracking-wider">
             Space Graph
           </h2>
         </div>
-        <div className="flex-1 flex items-center justify-center p-4">
-          <p className="text-xs text-text-secondary text-center leading-relaxed">
-            Run the scenario to see
-            <br />
-            spaces appear here
-          </p>
-        </div>
+        <EmptyState />
       </aside>
     );
   }
@@ -180,92 +264,160 @@ export function DagView({ events }: DagViewProps) {
   }
 
   return (
-    <aside className="h-full border-l border-border bg-surface-raised flex flex-col">
-      <div className="px-4 py-3 border-b border-border">
+    <aside className={outerClassName}>
+      <div className="px-4 py-3 border-b border-border flex items-center justify-between">
         <h2 className="text-xs font-medium text-text-secondary uppercase tracking-wider">
           Space Graph
         </h2>
+        <div className="flex items-center gap-1">
+          <span className="text-[10px] text-text-secondary font-mono mr-1">
+            {Math.round(zoom * 100)}%
+          </span>
+          <button
+            onClick={handleZoomOut}
+            className="w-6 h-6 flex items-center justify-center rounded text-text-secondary hover:text-text-primary hover:bg-surface transition-colors text-sm"
+            title="Zoom out"
+          >
+            −
+          </button>
+          <button
+            onClick={handleZoomIn}
+            className="w-6 h-6 flex items-center justify-center rounded text-text-secondary hover:text-text-primary hover:bg-surface transition-colors text-sm"
+            title="Zoom in"
+          >
+            +
+          </button>
+        </div>
       </div>
 
-      <div className="flex-1 flex items-center justify-center p-4 overflow-auto">
-        <svg
-          viewBox={`0 0 ${svgW} ${svgH}`}
-          className="w-full"
-          style={{ maxWidth: svgW }}
+      <Legend />
+
+      <div
+        ref={containerRef}
+        className="flex-1 overflow-auto p-4 relative"
+        onWheel={handleWheel}
+        style={{ touchAction: 'pan-x pan-y' }}
+      >
+        <div
+          className="flex items-center justify-center min-h-full"
+          style={{
+            transform: `scale(${zoom})`,
+            transformOrigin: 'center top',
+          }}
         >
-          {/* Edges: draw from dependency (top) down to dependant (bottom) */}
-          {edges.map((edge) => {
-            const depPos = nodePos.get(edge.to);
-            const parentPos = nodePos.get(edge.from);
-            if (!depPos || !parentPos) return null;
+          <svg
+            viewBox={`0 0 ${svgW} ${svgH}`}
+            width={svgW}
+            height={svgH}
+          >
+            {edges.map((edge) => {
+              const depPos = nodePos.get(edge.to);
+              const parentPos = nodePos.get(edge.from);
+              if (!depPos || !parentPos) return null;
 
-            const x1 = depPos.x + NODE_W / 2;
-            const y1 = depPos.y + NODE_H;
-            const x2 = parentPos.x + NODE_W / 2;
-            const y2 = parentPos.y;
-            const midY = (y1 + y2) / 2;
+              const x1 = depPos.x + NODE_W / 2;
+              const y1 = depPos.y + NODE_H;
+              const x2 = parentPos.x + NODE_W / 2;
+              const y2 = parentPos.y;
+              const midY = (y1 + y2) / 2;
 
-            return (
-              <path
-                key={`${edge.from}-${edge.to}`}
-                d={`M ${x1} ${y1} C ${x1} ${midY}, ${x2} ${midY}, ${x2} ${y2}`}
-                fill="none"
-                stroke="#1e3a2e"
-                strokeWidth="1.5"
+              return (
+                <path
+                  key={`${edge.from}-${edge.to}`}
+                  d={`M ${x1} ${y1} C ${x1} ${midY}, ${x2} ${midY}, ${x2} ${y2}`}
+                  fill="none"
+                  stroke="#1e3a2e"
+                  strokeWidth="1.5"
+                />
+              );
+            })}
+
+            {nodes.map((node) => {
+              const pos = nodePos.get(node.dataId);
+              if (!pos) return null;
+              const color = STATUS_COLORS[node.status] ?? '#1e3a2e';
+
+              return (
+                <g
+                  key={node.dataId}
+                  className="cursor-pointer"
+                  onMouseEnter={(e) => handleNodeEnter(node, e)}
+                  onMouseLeave={handleNodeLeave}
+                >
+                  <rect
+                    x={pos.x}
+                    y={pos.y}
+                    width={NODE_W}
+                    height={NODE_H}
+                    rx={4}
+                    fill="var(--color-surface)"
+                    stroke={color}
+                    strokeWidth={1.5}
+                  />
+                  <rect
+                    x={pos.x}
+                    y={pos.y}
+                    width={4}
+                    height={NODE_H}
+                    rx={2}
+                    fill={color}
+                  />
+                  <text
+                    x={pos.x + NODE_W / 2}
+                    y={pos.y + 18}
+                    textAnchor="middle"
+                    fill="#e2efe8"
+                    fontSize={11}
+                    fontFamily="var(--font-mono)"
+                  >
+                    {node.kind}
+                  </text>
+                  <text
+                    x={pos.x + NODE_W / 2}
+                    y={pos.y + 32}
+                    textAnchor="middle"
+                    fill="#6b8f7b"
+                    fontSize={8}
+                    fontFamily="var(--font-mono)"
+                  >
+                    {node.dataId.slice(0, 8)}
+                  </text>
+                </g>
+              );
+            })}
+          </svg>
+        </div>
+
+        {/* Tooltip */}
+        {tooltip && (
+          <div
+            className="absolute z-10 pointer-events-none bg-surface-raised border border-border rounded-lg px-3 py-2 shadow-lg"
+            style={{
+              left: tooltip.x,
+              top: tooltip.y,
+              transform: 'translate(-50%, -100%)',
+            }}
+          >
+            <div className="text-xs font-mono text-text-primary font-medium">
+              {tooltip.node.kind}
+            </div>
+            <div className="flex items-center gap-1.5 mt-1">
+              <span
+                className="w-1.5 h-1.5 rounded-full"
+                style={{
+                  backgroundColor:
+                    STATUS_COLORS[tooltip.node.status] ?? '#1e3a2e',
+                }}
               />
-            );
-          })}
-
-          {/* Nodes */}
-          {nodes.map((node) => {
-            const pos = nodePos.get(node.dataId);
-            if (!pos) return null;
-            const color = STATUS_COLORS[node.status] ?? '#1e3a2e';
-
-            return (
-              <g key={node.dataId}>
-                <rect
-                  x={pos.x}
-                  y={pos.y}
-                  width={NODE_W}
-                  height={NODE_H}
-                  rx={4}
-                  fill="var(--color-surface)"
-                  stroke={color}
-                  strokeWidth={1.5}
-                />
-                <rect
-                  x={pos.x}
-                  y={pos.y}
-                  width={4}
-                  height={NODE_H}
-                  rx={2}
-                  fill={color}
-                />
-                <text
-                  x={pos.x + NODE_W / 2}
-                  y={pos.y + 18}
-                  textAnchor="middle"
-                  fill="#e2efe8"
-                  fontSize={11}
-                  fontFamily="var(--font-mono)"
-                >
-                  {node.kind}
-                </text>
-                <text
-                  x={pos.x + NODE_W / 2}
-                  y={pos.y + 32}
-                  textAnchor="middle"
-                  fill="#6b8f7b"
-                  fontSize={8}
-                  fontFamily="var(--font-mono)"
-                >
-                  {node.dataId.slice(0, 8)}
-                </text>
-              </g>
-            );
-          })}
-        </svg>
+              <span className="text-[10px] text-text-secondary">
+                {STATUS_LABELS[tooltip.node.status] ?? tooltip.node.status}
+              </span>
+            </div>
+            <div className="text-[10px] text-text-secondary font-mono mt-1">
+              {tooltip.node.dataId}
+            </div>
+          </div>
+        )}
       </div>
     </aside>
   );

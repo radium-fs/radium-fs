@@ -8,7 +8,7 @@ interface CommandFlowProps {
 
 export function CommandFlow({ steps, onFileClick }: CommandFlowProps) {
   return (
-    <div className="flex-1 overflow-y-auto p-5 space-y-4">
+    <div className="flex-1 overflow-y-auto p-3 md:p-5 space-y-3 md:space-y-4">
       {steps.map((stepState, i) => (
         <StepCell
           key={stepState.step.id}

@@ -27,11 +27,11 @@ export function StepCell({ stepState, index, onFileClick }: StepCellProps) {
   return (
     <div className="border border-border rounded-lg overflow-hidden">
       {/* Header */}
-      <div className="flex items-center gap-3 px-4 py-2.5 bg-surface-raised border-b border-border">
+      <div className="flex items-center gap-2 md:gap-3 px-3 md:px-4 py-2 md:py-2.5 bg-surface-raised border-b border-border">
         <span className="text-[11px] font-mono text-text-secondary w-5 text-right shrink-0">
           {index + 1}
         </span>
-        <span className="text-sm font-medium text-text-primary">
+        <span className="text-xs md:text-sm font-medium text-text-primary truncate">
           {step.label}
         </span>
         <div className="flex-1" />
@@ -39,7 +39,7 @@ export function StepCell({ stepState, index, onFileClick }: StepCellProps) {
       </div>
 
       {/* Code block */}
-      <div className="bg-surface-code px-4 py-3 overflow-x-auto">
+      <div className="bg-surface-code px-3 md:px-4 py-2.5 md:py-3 overflow-x-auto">
         {codeHtml ? (
           <div dangerouslySetInnerHTML={{ __html: codeHtml }} />
         ) : (
