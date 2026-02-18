@@ -16,7 +16,8 @@
   "scripts": {
     "typecheck": "tsc --build",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "dev:playground": "pnpm --filter playground dev"
   },
   "devDependencies": {
     "vitest": "^4.0.18"

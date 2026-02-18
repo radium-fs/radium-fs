@@ -143,3 +143,6 @@ vite.config.ts.timestamp-*
 
 # radium-fs example output
 examples/.radium-fs-data/
+
+# playground build output
+apps/playground/dist/
