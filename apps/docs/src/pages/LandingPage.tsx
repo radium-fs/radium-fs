@@ -67,8 +67,13 @@ export function LandingPage() {
       </header>
 
       {/* Hero */}
-      <section className="flex-1 flex flex-col items-center justify-center px-6 py-16 sm:py-24 text-center">
-        <h1 className="text-4xl sm:text-5xl font-bold text-text-primary mb-3 tracking-tight">
+      <section className="flex-1 flex flex-col items-center px-6 pt-12 sm:pt-20 pb-16 text-center">
+        <h1 className="flex items-center gap-3 text-4xl sm:text-5xl font-bold text-text-primary mb-3 tracking-tight">
+          <img
+            src={`${import.meta.env.BASE_URL}radium-fs-logo.png`}
+            alt=""
+            className="h-10 w-10 sm:h-12 sm:w-12"
+          />
           radium-fs
         </h1>
         <p className="text-base sm:text-lg text-text-secondary max-w-xl mb-10 leading-relaxed">
